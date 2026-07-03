@@ -146,6 +146,17 @@ def relevance(cat: Catalyst, direction: str) -> float:
     return min(1.0, base * consistency)
 
 
+def effective_lead_minutes(cat_ts: pd.Timestamp, ev_start: pd.Timestamp) -> float:
+    """Minutes the catalyst preceded the event, clock starting at the session open.
+
+    A pre-market catalyst cannot move the tape before 09:30, so its reaction lag
+    is measured from the open, not from publication.
+    """
+    session_open = ev_start.normalize() + pd.Timedelta(hours=9, minutes=30)
+    anchor = max(cat_ts, session_open) if cat_ts < session_open <= ev_start else cat_ts
+    return (ev_start - anchor).total_seconds() / 60
+
+
 def time_score(cat: Catalyst, ev_start: pd.Timestamp, ev_end: pd.Timestamp,
                pre_minutes: float, post_minutes: float = 10.0) -> float:
     """1.0 for catalyst just before the move, decaying exp(-dt/15min); 0 outside window."""
@@ -156,7 +167,7 @@ def time_score(cat: Catalyst, ev_start: pd.Timestamp, ev_end: pd.Timestamp,
     if not (lo <= cat.ts <= hi):
         return 0.0
     if cat.ts <= ev_start:
-        dt_min = (ev_start - cat.ts).total_seconds() / 60
+        dt_min = effective_lead_minutes(cat.ts, ev_start)
         s = math.exp(-dt_min / max(pre_minutes / 3, 15.0))
     else:
         # published after the move started — reaction coverage, weaker causal evidence
@@ -171,7 +182,7 @@ def align(events, catalysts: list[Catalyst], pre_minutes: float = 45.0,
     """Score every catalyst against every event; keep top 5 per event."""
     result: dict[str, list[dict]] = {}
     for ev in events:
-        pre = gap_lookback_hours * 60 if ev.kind == "gap" else pre_minutes
+        pre = gap_lookback_hours * 60 if ev.kind in ("gap", "day") else pre_minutes
         scored = []
         for cat in catalysts:
             t = time_score(cat, ev.start, ev.end, pre_minutes=pre)
@@ -184,7 +195,7 @@ def align(events, catalysts: list[Catalyst], pre_minutes: float = 45.0,
             scored.append({
                 "catalyst": cat, "score": s, "relevance": r, "time_score": t,
                 "delta_minutes": None if cat.ts is None
-                else round((ev.start - cat.ts).total_seconds() / 60, 1),
+                else round(effective_lead_minutes(cat.ts, ev.start), 1),
             })
         scored.sort(key=lambda x: -x["score"])
         result[ev.event_id] = scored[:5]
@@ -215,6 +226,13 @@ def deliveries_check(catalysts: list[Catalyst]) -> dict | None:
         figures["deliveries"] = int(m_del.group(1).replace(",", ""))
     if m_prod:
         figures["production"] = int(m_prod.group(1).replace(",", ""))
+    # prefer an exact (comma-formatted) delivery figure from any coverage over rounded PR text
+    for c in catalysts:
+        m = re.search(r"([\d]{3},[\d]{3})\s+(?:vehicle\s+)?deliver",
+                      f"{c.headline} {c.text[:1000]}", re.IGNORECASE)
+        if m:
+            figures["deliveries_exact"] = int(m.group(1).replace(",", ""))
+            break
     return {
         "found": True,
         "headline": pr.headline,

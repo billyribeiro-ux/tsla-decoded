@@ -27,6 +27,7 @@ detection:
   merge_gap_minutes: 15       # collapse triggers within this gap into one event
   vwap_dev_sigma: 2.0         # anchored-VWAP drift threshold (in baseline daily sigmas)
   gap_z_threshold: 2.5        # overnight gap vs baseline daily vol
+  day_z_threshold: 2.0        # full-session close-to-close move vs baseline daily vol
   major_event_z: 4.0          # events at/above this must be attributed for convergence
 
 loop:

@@ -24,7 +24,8 @@ def test_coincident_pr_outranks_stale_news():
     res = align([ev], [stale, fresh_pr])["E0702-0935"]
     assert res, "no candidates aligned"
     assert res[0]["catalyst"] is fresh_pr
-    assert res[0]["delta_minutes"] == 15.0
+    # pre-market PR: reaction clock starts at the 09:30 open, not at publication
+    assert res[0]["delta_minutes"] == 5.0
 
 
 def test_direction_consistency_boosts_bearish_for_down_moves():

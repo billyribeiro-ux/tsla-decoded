@@ -58,7 +58,7 @@ def intraday_day(z: pd.DataFrame, events, attributions, day, regimes, out: Path)
         ax.set_ylim(bottom=ylim0)
 
     for ev in events:
-        if ev.start.date() != day or ev.kind == "gap":
+        if ev.start.date() != day or ev.kind in ("gap", "day"):
             continue
         color = UP if ev.direction == "up" else DOWN
         ax.axvspan(ev.start, max(ev.end, ev.start + pd.Timedelta(minutes=5)),
@@ -134,6 +134,8 @@ def dashboard(z: pd.DataFrame, week_5m: pd.DataFrame, events, attributions,
         for ev in events:
             if ev.start.date() != day or ev.kind == "gap":
                 continue
+            if ev.kind == "day":
+                continue  # session-level events are covered in the report table
             att = attributions.get(ev.event_id, {})
             cands = att.get("candidates", [])
             top = cands[0]["catalyst"].headline if cands else "no catalyst matched"

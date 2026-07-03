@@ -37,7 +37,7 @@ def main() -> None:
     daily_week = inv.daily.loc[settings.target_start: settings.target_end]
     state["daily_week"] = daily_week
     for day, dz in z.groupby(z.index.date):
-        intraday_ret = (dz["close"].iloc[-1] / dz["close"].iloc[0] - 1) * 100
+        intraday_ret = (dz["close"].iloc[-1] / dz["open"].iloc[0] - 1) * 100
         eod = daily_week[daily_week.index.date == day]
         if not eod.empty:
             eod_ret = (eod["close"].iloc[0] / eod["open"].iloc[0] - 1) * 100

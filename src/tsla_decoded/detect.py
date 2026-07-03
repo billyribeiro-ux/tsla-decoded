@@ -138,18 +138,20 @@ def detect_events(
             notes=[f"anchored-VWAP deviation {dev.loc[peak_ts]*100:.2f}% (>{cfg['vwap_dev_sigma']}σ daily)"],
         ))
 
-    # overnight gaps at daily level
+    # overnight gaps and abnormal full sessions at daily level
     if restrict_to is None:
         d = daily_df.copy()
         d["gap"] = np.log(d["open"] / d["close"].shift())
+        d["ret_cc"] = np.log(d["close"] / d["close"].shift())
         gap_sigma = float(d["gap"].std())
+        cc_sigma = float(d["ret_cc"].std())
         target_days = {ts.date() for ts in z.index}
         for ts, row in d.iterrows():
             if ts.date() not in target_days or pd.isna(row["gap"]):
                 continue
+            open_ts = pd.Timestamp(f"{ts.date()} 09:30").tz_localize("America/New_York")
             gz = abs(row["gap"]) / max(gap_sigma, 1e-9)
             if gz >= cfg["gap_z_threshold"]:
-                open_ts = pd.Timestamp(f"{ts.date()} 09:30").tz_localize("America/New_York")
                 events.append(Event(
                     event_id=f"G{ts:%m%d}",
                     start=open_ts, end=open_ts,
@@ -158,6 +160,23 @@ def detect_events(
                     peak_z=float(gz), peak_vol_z=np.nan,
                     kind="gap", resolution="daily",
                     notes=["overnight gap vs prior close — catalyst window spans after-hours/pre-market"],
+                ))
+            # whole abnormal session as one attributable event (grinding day-long moves)
+            dz = abs(row["ret_cc"]) / max(cc_sigma, 1e-9)
+            if dz >= cfg.get("day_z_threshold", 2.0):
+                day_bars = z[z.index.date == ts.date()]
+                events.append(Event(
+                    event_id=f"S{ts:%m%d}",
+                    start=open_ts,
+                    end=day_bars.index[-1] if not day_bars.empty
+                    else open_ts + pd.Timedelta(hours=6, minutes=30),
+                    direction="up" if row["ret_cc"] > 0 else "down",
+                    magnitude_pct=float(row["ret_cc"]) * 100,
+                    peak_z=float(dz),
+                    peak_vol_z=float(day_bars["z_vol"].max()) if not day_bars.empty else np.nan,
+                    kind="day", resolution="daily",
+                    notes=[f"full-session move {row['ret_cc']*100:+.1f}% = {dz:.1f}σ of daily vol — "
+                           "catalyst window spans overnight/pre-market"],
                 ))
 
     events.sort(key=lambda e: e.start)

@@ -1,0 +1,695 @@
+{
+  "events": [
+    {
+      "event_id": "S0629",
+      "start": "2026-06-29T09:30:00-04:00",
+      "end": "2026-06-29T15:55:00-04:00",
+      "direction": "up",
+      "magnitude_pct": 8.123,
+      "peak_z": 2.63,
+      "peak_vol_z": 8.34,
+      "kind": "day",
+      "resolution": "daily",
+      "notes": [
+        "full-session move +8.1% = 2.6\u03c3 of daily vol \u2014 catalyst window spans overnight/pre-market",
+        "1-min onset refined to 09:40",
+        "cross-asset: sector-wide move (peers moved together) {'RIVN': 6.2, 'LCID': 9.35, 'NIO': 2.04}"
+      ]
+    },
+    {
+      "event_id": "E0629-1025",
+      "start": "2026-06-29T09:57:00-04:00",
+      "end": "2026-06-29T10:25:00-04:00",
+      "direction": "up",
+      "magnitude_pct": 1.049,
+      "peak_z": 5.45,
+      "peak_vol_z": -1.57,
+      "kind": "spike",
+      "resolution": "5min",
+      "notes": [
+        "1-min onset refined to 09:57",
+        "cross-asset: sector-wide move (peers moved together) {'RIVN': 2.52, 'LCID': 2.43, 'NIO': 0.81}"
+      ]
+    },
+    {
+      "event_id": "E0630-1140",
+      "start": "2026-06-30T11:10:00-04:00",
+      "end": "2026-06-30T11:40:00-04:00",
+      "direction": "down",
+      "magnitude_pct": -0.283,
+      "peak_z": 4.18,
+      "peak_vol_z": -0.62,
+      "kind": "spike",
+      "resolution": "5min",
+      "notes": [
+        "1-min onset refined to 11:10",
+        "cross-asset: TSLA-specific vs peers {'RIVN': 0.0, 'LCID': 1.86, 'NIO': 0.0}"
+      ]
+    },
+    {
+      "event_id": "S0702",
+      "start": "2026-07-02T09:30:00-04:00",
+      "end": "2026-07-02T15:55:00-04:00",
+      "direction": "down",
+      "magnitude_pct": -7.784,
+      "peak_z": 2.52,
+      "peak_vol_z": 8.23,
+      "kind": "day",
+      "resolution": "daily",
+      "notes": [
+        "full-session move -7.8% = 2.5\u03c3 of daily vol \u2014 catalyst window spans overnight/pre-market"
+      ]
+    },
+    {
+      "event_id": "E0702-1015",
+      "start": "2026-07-02T09:47:00-04:00",
+      "end": "2026-07-02T10:30:00-04:00",
+      "direction": "down",
+      "magnitude_pct": -3.522,
+      "peak_z": 7.74,
+      "peak_vol_z": 7.39,
+      "kind": "spike",
+      "resolution": "5min",
+      "notes": [
+        "1-min onset refined to 09:47"
+      ]
+    },
+    {
+      "event_id": "E0702-1100",
+      "start": "2026-07-02T11:00:00-04:00",
+      "end": "2026-07-02T11:00:00-04:00",
+      "direction": "down",
+      "magnitude_pct": -0.668,
+      "peak_z": 3.25,
+      "peak_vol_z": 5.65,
+      "kind": "spike",
+      "resolution": "5min",
+      "notes": []
+    },
+    {
+      "event_id": "E0702-1205",
+      "start": "2026-07-02T11:37:00-04:00",
+      "end": "2026-07-02T12:05:00-04:00",
+      "direction": "down",
+      "magnitude_pct": -0.799,
+      "peak_z": 5.19,
+      "peak_vol_z": 2.91,
+      "kind": "spike",
+      "resolution": "5min",
+      "notes": [
+        "1-min onset refined to 11:37",
+        "cross-asset: sector-wide move (peers moved together) {'RIVN': -1.16, 'LCID': -0.65, 'NIO': -0.41}"
+      ]
+    }
+  ],
+  "attributions": {
+    "S0629": {
+      "confidence": 0.577,
+      "components": {
+        "alignment": 0.42,
+        "idio_consistency": 0.831,
+        "timing_precision": 1.0,
+        "uniqueness": 0.143
+      },
+      "idio": {
+        "idio_share": 0.8306,
+        "actual_pct": 6.6491,
+        "market_pct": 1.1266
+      },
+      "flow": {
+        "volume_imbalance": 0.202,
+        "mean_clv": 0.08,
+        "total_volume": 49793898,
+        "character": "two-sided/rotational flow"
+      },
+      "candidates": [
+        {
+          "score": 0.42,
+          "delta_minutes": 0.0,
+          "ts": "2026-06-28T19:03:00-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Reports Q2 Deliveries in a Matter of Days. Here's the Number That Matters.",
+          "url": "https://www.fool.com/investing/2026/06/28/tesla-reports-q2-deliveries-in-a-matter-of-days-he/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.36,
+          "delta_minutes": 0.0,
+          "ts": "2026-06-29T07:40:37-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Stock In Focus: Regulatory Twists, Q2 Delivery Countdown, 16 GW Energy Partnership",
+          "url": "https://www.benzinga.com/trading-ideas/movers/26/06/60152354/tesla-stock-in-focus-regulatory-twists-q2-delivery-countdown-16-gw-energy-partnership",
+          "timing_precise": true
+        },
+        {
+          "score": 0.2185,
+          "delta_minutes": 0.0,
+          "ts": "2026-06-28T22:48:40-04:00",
+          "source_type": "general_news",
+          "headline": "Rollins: A Rare Generational Wealth-Building Opportunity (Rating Upgrade)",
+          "url": "https://seekingalpha.com/article/4918378-rollins-stock-rare-generational-wealth-building-opportunity-upgrade",
+          "timing_precise": true
+        },
+        {
+          "score": 0.1823,
+          "delta_minutes": -90.6,
+          "ts": "2026-06-29T11:00:34-04:00",
+          "source_type": "stock_news",
+          "headline": "Why Tesla stock is climbing over 4% on Monday",
+          "url": "https://invezz.com/news/2026/06/29/why-tesla-stock-is-climbing-over-4-on-monday/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.15,
+          "delta_minutes": 0.0,
+          "ts": "2026-06-28T21:10:42-04:00",
+          "source_type": "general_news",
+          "headline": "Farmland Partners: Still Not Attractive After The Decline",
+          "url": "https://seekingalpha.com/article/4918362-farmland-partners-stock-still-not-attractive-after-decline",
+          "timing_precise": true
+        }
+      ]
+    },
+    "E0629-1025": {
+      "confidence": 0.625,
+      "components": {
+        "alignment": 0.287,
+        "idio_consistency": 1.0,
+        "timing_precision": 1.0,
+        "uniqueness": 0.639
+      },
+      "idio": {
+        "idio_share": 1.0,
+        "actual_pct": 0.8909,
+        "market_pct": -0.8142
+      },
+      "flow": {
+        "volume_imbalance": 0.253,
+        "mean_clv": 0.066,
+        "total_volume": 6666917,
+        "character": "two-sided/rotational flow"
+      },
+      "candidates": [
+        {
+          "score": 0.2875,
+          "delta_minutes": 27.0,
+          "ts": "2026-06-29T07:40:37-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Stock In Focus: Regulatory Twists, Q2 Delivery Countdown, 16 GW Energy Partnership",
+          "url": "https://www.benzinga.com/trading-ideas/movers/26/06/60152354/tesla-stock-in-focus-regulatory-twists-q2-delivery-countdown-16-gw-energy-partnership",
+          "timing_precise": true
+        },
+        {
+          "score": 0.1038,
+          "delta_minutes": 27.0,
+          "ts": "2026-06-29T05:30:00-04:00",
+          "source_type": "general_news",
+          "headline": "How a Tight-Lipped Fed Could Lead to Higher Mortgage Rates",
+          "url": "https://www.wsj.com/finance/investing/how-a-tight-lipped-fed-could-lead-to-higher-mortgage-rates-785f802f",
+          "timing_precise": true
+        },
+        {
+          "score": 0.0958,
+          "delta_minutes": 27.0,
+          "ts": "2026-06-29T06:28:00-04:00",
+          "source_type": "general_news",
+          "headline": "Stock Market's Risk Appetite Is Shifting as AI, Iran, and Fed Fears Linger",
+          "url": "https://www.barrons.com/articles/stock-market-things-to-know-today-477cc238",
+          "timing_precise": true
+        },
+        {
+          "score": 0.075,
+          "delta_minutes": 0.0,
+          "ts": "2026-06-29T09:57:00-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Stock Rises as Musk's EV Maker Deepens Ties With SpaceX",
+          "url": "https://www.barrons.com/articles/tesla-stock-full-self-driving-spacex-cbf394a8",
+          "timing_precise": true
+        },
+        {
+          "score": 0.0725,
+          "delta_minutes": -3.0,
+          "ts": "2026-06-29T10:00:00-04:00",
+          "source_type": "general_news",
+          "headline": "Sixth Street Specialty Lending: 10% Yield And Low Nonaccruals Make It A Buy",
+          "url": "https://seekingalpha.com/article/4918367-sixth-street-specialty-lending-10-percent-yield-and-low-nonaccruals-make-it-a-buy",
+          "timing_precise": true
+        }
+      ]
+    },
+    "E0630-1140": {
+      "confidence": 0.367,
+      "components": {
+        "alignment": 0.254,
+        "idio_consistency": 0.081,
+        "timing_precision": 0.7,
+        "uniqueness": 0.639
+      },
+      "idio": {
+        "idio_share": 0.0813,
+        "actual_pct": 0.2237,
+        "market_pct": 0.2055
+      },
+      "flow": {
+        "volume_imbalance": 0.118,
+        "mean_clv": 0.044,
+        "total_volume": 3388119,
+        "character": "two-sided/rotational flow"
+      },
+      "candidates": [
+        {
+          "score": 0.2542,
+          "delta_minutes": 64.5,
+          "ts": "2026-06-30T10:05:33-04:00",
+          "source_type": "stock_news",
+          "headline": "TSLA Stock Rises Ahead of Q2 Deliveries Report: Buy, Hold, or Sell?",
+          "url": "https://www.zacks.com/stock/news/2945196/tsla-stock-rises-ahead-of-q2-deliveries-report-buy-hold-or-sell?cid=CS-STOCKNEWSAPI-FT-analyst_blog|most_popular_stocks-2945196",
+          "timing_precise": true
+        },
+        {
+          "score": 0.0918,
+          "delta_minutes": 46.3,
+          "ts": "2026-06-30T10:23:40-04:00",
+          "source_type": "stock_news",
+          "headline": "Prediction: This Is Where Tesla's Price Target Points In 2027",
+          "url": "https://247wallst.com/investing/2026/06/30/prediction-this-is-where-teslas-price-target-points-in-2027/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.0878,
+          "delta_minutes": -22.8,
+          "ts": "2026-06-30T11:32:50-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla starts testing Cybercab without pedals or a steering wheel in Austin",
+          "url": "https://techcrunch.com/2026/06/30/tesla-starts-testing-cybercab-without-pedals-or-a-steering-wheel-in-austin/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.0825,
+          "delta_minutes": 45.0,
+          "ts": "2026-06-30T10:25:00-04:00",
+          "source_type": "general_news",
+          "headline": "Warsh says he's determined to slay inflation. Investors want to know if he really means it.",
+          "url": "https://www.marketwatch.com/story/warsh-says-hes-determined-to-slay-inflation-investors-want-to-know-if-he-really-means-it-2ada8360",
+          "timing_precise": true
+        },
+        {
+          "score": 0.0782,
+          "delta_minutes": 100.0,
+          "ts": "2026-06-30T09:05:00-04:00",
+          "source_type": "stock_news",
+          "headline": "Where Will Tesla Stock Be in 5 Years?",
+          "url": "https://www.fool.com/investing/2026/06/30/where-will-tesla-stock-be-in-5-years/",
+          "timing_precise": true
+        }
+      ]
+    },
+    "S0702": {
+      "confidence": 0.881,
+      "components": {
+        "alignment": 1.0,
+        "idio_consistency": 0.743,
+        "timing_precision": 1.0,
+        "uniqueness": 0.552
+      },
+      "idio": {
+        "idio_share": 0.7425,
+        "actual_pct": -7.8471,
+        "market_pct": -2.0204
+      },
+      "flow": {
+        "volume_imbalance": -0.171,
+        "mean_clv": -0.077,
+        "total_volume": 62280545,
+        "character": "two-sided/rotational flow"
+      },
+      "candidates": [
+        {
+          "score": 1.0,
+          "delta_minutes": 0.0,
+          "ts": "2026-07-02T09:05:00-04:00",
+          "source_type": "press_release",
+          "headline": "Tesla Second Quarter 2026 Production, Deliveries & Deployments",
+          "url": "https://www.businesswire.com/news/home/20260702058054/en/Tesla-Second-Quarter-2026-Production-Deliveries-Deployments/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.6,
+          "delta_minutes": 0.0,
+          "ts": "2026-07-02T09:05:00-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Second Quarter 2026 Production, Deliveries & Deployments",
+          "url": "https://www.businesswire.com/news/home/20260702058054/en/Tesla-Second-Quarter-2026-Production-Deliveries-Deployments/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.45,
+          "delta_minutes": 0.0,
+          "ts": "2026-07-02T09:08:51-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla reports 480,126 vehicle deliveries for second quarter, topping expectation",
+          "url": "https://www.cnbc.com/2026/07/02/tesla-tsla-q2-2026-vehicle-delivery-production.html",
+          "timing_precise": true
+        },
+        {
+          "score": 0.4485,
+          "delta_minutes": 0.0,
+          "ts": "2026-07-02T03:42:07-04:00",
+          "source_type": "stock_news",
+          "headline": "U.S. closes 2022 probe into 695,000 Tesla vehicles over unexpected braking",
+          "url": "https://www.reuters.com/legal/litigation/us-closes-2022-probe-into-695000-tesla-vehicles-over-unexpected-braking-2026-07-02/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.4312,
+          "delta_minutes": 0.0,
+          "ts": "2026-07-02T08:12:06-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Stock Surges 15% as FSD Update Backs Its Autonomy Thesis",
+          "url": "https://www.marketbeat.com/articles/tesla-stock-surges-15-as-fsd-update-backs-its-autonomy-thesis/",
+          "timing_precise": true
+        }
+      ]
+    },
+    "E0702-1015": {
+      "confidence": 0.876,
+      "components": {
+        "alignment": 0.968,
+        "idio_consistency": 0.775,
+        "timing_precision": 1.0,
+        "uniqueness": 0.569
+      },
+      "idio": {
+        "idio_share": 0.7749,
+        "actual_pct": -3.5799,
+        "market_pct": -0.8059
+      },
+      "flow": {
+        "volume_imbalance": -0.481,
+        "mean_clv": -0.201,
+        "total_volume": 15611182,
+        "character": "aggressive institutional-style selling"
+      },
+      "candidates": [
+        {
+          "score": 0.8679,
+          "delta_minutes": 17.0,
+          "ts": "2026-07-02T09:05:00-04:00",
+          "source_type": "press_release",
+          "headline": "Tesla Second Quarter 2026 Production, Deliveries & Deployments",
+          "url": "https://www.businesswire.com/news/home/20260702058054/en/Tesla-Second-Quarter-2026-Production-Deliveries-Deployments/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.5207,
+          "delta_minutes": 17.0,
+          "ts": "2026-07-02T09:05:00-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Second Quarter 2026 Production, Deliveries & Deployments",
+          "url": "https://www.businesswire.com/news/home/20260702058054/en/Tesla-Second-Quarter-2026-Production-Deliveries-Deployments/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.3906,
+          "delta_minutes": 17.0,
+          "ts": "2026-07-02T09:08:51-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla reports 480,126 vehicle deliveries for second quarter, topping expectation",
+          "url": "https://www.cnbc.com/2026/07/02/tesla-tsla-q2-2026-vehicle-delivery-production.html",
+          "timing_precise": true
+        },
+        {
+          "score": 0.3743,
+          "delta_minutes": 17.0,
+          "ts": "2026-07-02T08:12:06-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Stock Surges 15% as FSD Update Backs Its Autonomy Thesis",
+          "url": "https://www.marketbeat.com/articles/tesla-stock-surges-15-as-fsd-update-backs-its-autonomy-thesis/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.3613,
+          "delta_minutes": 17.0,
+          "ts": "2026-07-02T09:07:21-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla posts stronger-than-expected Q2 deliveries as Europe sales improve",
+          "url": "https://www.reuters.com/business/autos-transportation/tesla-posts-stronger-than-expected-q2-deliveries-europe-sales-improve-2026-07-02/",
+          "timing_precise": true
+        }
+      ]
+    },
+    "E0702-1100": {
+      "confidence": 0.529,
+      "components": {
+        "alignment": 0.572,
+        "idio_consistency": 0.392,
+        "timing_precision": 0.7,
+        "uniqueness": 0.35
+      },
+      "idio": {
+        "idio_share": 0.3923,
+        "actual_pct": -0.3209,
+        "market_pct": -0.195
+      },
+      "flow": {
+        "volume_imbalance": 0.12,
+        "mean_clv": -0.212,
+        "total_volume": 2842412,
+        "character": "two-sided/rotational flow"
+      },
+      "candidates": [
+        {
+          "score": 0.4724,
+          "delta_minutes": 90.0,
+          "ts": "2026-07-02T09:05:00-04:00",
+          "source_type": "press_release",
+          "headline": "Tesla Second Quarter 2026 Production, Deliveries & Deployments",
+          "url": "https://www.businesswire.com/news/home/20260702058054/en/Tesla-Second-Quarter-2026-Production-Deliveries-Deployments/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.3071,
+          "delta_minutes": 45.9,
+          "ts": "2026-07-02T10:14:09-04:00",
+          "source_type": "stock_news",
+          "headline": "Why Tesla stock is tanking 3% even after crushing delivery estimates",
+          "url": "https://invezz.com/news/2026/07/02/why-tesla-stock-is-tanking-3-even-after-crushing-delivery-estimates/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.2834,
+          "delta_minutes": 90.0,
+          "ts": "2026-07-02T09:05:00-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Second Quarter 2026 Production, Deliveries & Deployments",
+          "url": "https://www.businesswire.com/news/home/20260702058054/en/Tesla-Second-Quarter-2026-Production-Deliveries-Deployments/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.2126,
+          "delta_minutes": 90.0,
+          "ts": "2026-07-02T09:08:51-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla reports 480,126 vehicle deliveries for second quarter, topping expectation",
+          "url": "https://www.cnbc.com/2026/07/02/tesla-tsla-q2-2026-vehicle-delivery-production.html",
+          "timing_precise": true
+        },
+        {
+          "score": 0.2099,
+          "delta_minutes": 0.1,
+          "ts": "2026-07-02T10:59:56-04:00",
+          "source_type": "general_news",
+          "headline": "FactSet Still Offers More Than 30% Upside",
+          "url": "https://seekingalpha.com/article/4919503-factset-still-offers-more-than-30-percent-upside",
+          "timing_precise": true
+        }
+      ]
+    },
+    "E0702-1205": {
+      "confidence": 0.475,
+      "components": {
+        "alignment": 0.388,
+        "idio_consistency": 0.427,
+        "timing_precision": 1.0,
+        "uniqueness": 0.101
+      },
+      "idio": {
+        "idio_share": 0.427,
+        "actual_pct": -1.0838,
+        "market_pct": -0.6211
+      },
+      "flow": {
+        "volume_imbalance": -0.057,
+        "mean_clv": -0.037,
+        "total_volume": 5570757,
+        "character": "two-sided/rotational flow"
+      },
+      "candidates": [
+        {
+          "score": 0.3884,
+          "delta_minutes": 0.5,
+          "ts": "2026-07-02T11:36:31-04:00",
+          "source_type": "stock_news",
+          "headline": "Stock Market Rebounds, But AI Falters; Meta, Tesla, Jobs Report In Focus: Weekly Review",
+          "url": "https://www.investors.com/news/stock-market-rebounds-ai-falters-meta-tesla-jobs-report/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.3491,
+          "delta_minutes": 30.5,
+          "ts": "2026-07-02T11:06:32-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Drops 7% Despite Blowout Q2 Delivery Beat, Nio Slips After Its Own Delivery Update",
+          "url": "https://247wallst.com/investing/2026/07/02/tesla-drops-7-despite-blowout-q2-delivery-beat-nio-slips-after-its-own-delivery-update/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.347,
+          "delta_minutes": 127.0,
+          "ts": "2026-07-02T09:05:00-04:00",
+          "source_type": "press_release",
+          "headline": "Tesla Second Quarter 2026 Production, Deliveries & Deployments",
+          "url": "https://www.businesswire.com/news/home/20260702058054/en/Tesla-Second-Quarter-2026-Production-Deliveries-Deployments/",
+          "timing_precise": true
+        },
+        {
+          "score": 0.3212,
+          "delta_minutes": 13.7,
+          "ts": "2026-07-02T11:23:19-04:00",
+          "source_type": "analyst",
+          "headline": "Tesla deliveries show auto business 'here to stay,' says William Blair",
+          "url": "",
+          "timing_precise": true
+        },
+        {
+          "score": 0.27,
+          "delta_minutes": -0.1,
+          "ts": "2026-07-02T11:37:03-04:00",
+          "source_type": "stock_news",
+          "headline": "Tesla Q2 vehicle deliveries jump year-over-year, top expectations",
+          "url": "https://www.proactiveinvestors.com/companies/news/1094877",
+          "timing_precise": true
+        }
+      ]
+    }
+  },
+  "iterations": [
+    {
+      "iteration": 0,
+      "stage": "P0: 5-min detection, TSLA news/PR/analyst",
+      "events": 7,
+      "confidences": {
+        "S0629": 0.577,
+        "E0629-1025": 0.345,
+        "E0630-1140": 0.532,
+        "S0702": 0.881,
+        "E0702-1015": 0.68,
+        "E0702-1100": 0.325,
+        "E0702-1205": 0.467
+      },
+      "http_requests_so_far": 0
+    },
+    {
+      "iteration": 1,
+      "stage": "P1: 1-min onset refinement",
+      "events": 7,
+      "confidences": {
+        "S0629": 0.577,
+        "E0629-1025": 0.467,
+        "E0630-1140": 0.286,
+        "S0702": 0.881,
+        "E0702-1015": 0.601,
+        "E0702-1100": 0.325,
+        "E0702-1205": 0.498
+      },
+      "http_requests_so_far": 0
+    },
+    {
+      "iteration": 2,
+      "stage": "P2: widened windows + economic calendar + general news",
+      "events": 7,
+      "confidences": {
+        "S0629": 0.577,
+        "E0629-1025": 0.625,
+        "E0630-1140": 0.367,
+        "S0702": 0.881,
+        "E0702-1015": 0.876,
+        "E0702-1100": 0.529,
+        "E0702-1205": 0.475
+      },
+      "http_requests_so_far": 0
+    },
+    {
+      "iteration": 3,
+      "stage": "P3: cross-asset (peers vs market) check",
+      "events": 7,
+      "confidences": {
+        "S0629": 0.577,
+        "E0629-1025": 0.625,
+        "E0630-1140": 0.367,
+        "S0702": 0.881,
+        "E0702-1015": 0.876,
+        "E0702-1100": 0.529,
+        "E0702-1205": 0.475
+      },
+      "http_requests_so_far": 0
+    }
+  ],
+  "unresolved": [
+    "S0629",
+    "E0629-1025",
+    "E0630-1140",
+    "E0702-1205"
+  ],
+  "capabilities": {
+    "historical-chart/5min": "ok",
+    "historical-chart/1min": "ok",
+    "historical-price-eod/full": "ok",
+    "news/press-releases": "ok",
+    "news/stock": "ok",
+    "grades-news": "ok",
+    "price-target-news": "ok",
+    "economic-calendar": "ok",
+    "news/general-latest": "ok"
+  },
+  "market_model": {
+    "r_squared": 0.3542,
+    "params": {
+      "const": 0.0,
+      "SPY": 0.4061,
+      "QQQ": 0.9511
+    }
+  },
+  "feature_importance": {
+    "ret_QQQ": 0.344294,
+    "z_vol": 0.246557,
+    "ret_SPY": 0.243202,
+    "min_since_economic": 0.224194,
+    "min_since_analyst": 0.191475,
+    "vwap_dev": 0.1713,
+    "min_since_press_release": 0.151439,
+    "min_since_stock_news": 0.141283
+  },
+  "deliveries_check": {
+    "found": true,
+    "headline": "Tesla Second Quarter 2026 Production, Deliveries & Deployments",
+    "ts": "2026-07-02T09:05:00-04:00",
+    "timing_precise": true,
+    "figures": {
+      "deliveries": 480000,
+      "production": 450000,
+      "deliveries_exact": 480126
+    },
+    "url": "https://www.businesswire.com/news/home/20260702058054/en/Tesla-Second-Quarter-2026-Production-Deliveries-Deployments/",
+    "reaction_headlines": [
+      "Tesla Second Quarter 2026 Production, Deliveries & Deployments",
+      "Sunrun, Renew Home, and Tesla Team Up to Deliver More Than 16 Gigawatts of Fast, Flexible Power for Data Centers and Large Loads",
+      "Tesla Crushes Q2 Deliveries & Energy Storage Forecasts: What's Next?",
+      "Tesla's 13% Rally Sets Up a Balanced Risk Reward Ahead of Q2 Delivery Numbers",
+      "Tesla Quarterly Deliveries Jump 25%. Here's Why the Stock Fell Anyway.",
+      "Tesla Just Smoked Its Delivery Number by 74,000 Cars and Nobody Saw It Coming",
+      "Tesla Delivers 480,126 Vehicles In Q2, \u201cFar Better Than The Street Was Expecting\u201d",
+      "Tesla's Q2 Delivery Report Just Landed. Here Are 3 Key Takeaways for Investors."
+    ]
+  }
+}
