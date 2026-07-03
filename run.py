@@ -25,6 +25,8 @@ def main() -> None:
                         help="run the historical delivery-release reaction study instead")
     parser.add_argument("--deep", action="store_true",
                         help="run the per-session 1-minute forensic deep dive instead")
+    parser.add_argument("--surface", action="store_true",
+                        help="run the beneath-the-surface microstructure forensics instead")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -33,6 +35,14 @@ def main() -> None:
         settings.loop["max_iters"] = args.max_iters
 
     client = FMPClient(settings.api_key, settings.cache_dir, refresh=args.refresh)
+
+    if args.surface:
+        from tsla_decoded.microstructure import run_surface
+        run_surface(client, settings)
+        print(f"\nDone. {client.http_requests} HTTP requests this run.")
+        print(f"Outputs: {settings.output_dir}/beneath_the_surface.md, "
+              f"{settings.output_dir}/charts/vpin_week.png, kyles_lambda.png, etf_tape.png")
+        return
 
     if args.deep:
         from tsla_decoded.deep_dive import run_deep_dive
