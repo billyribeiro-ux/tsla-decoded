@@ -1,0 +1,17 @@
+# Secrets — never commit
+.env
+
+# Data cache
+data/raw/
+
+# Generated output (final report/charts committed explicitly via -f if desired)
+output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/

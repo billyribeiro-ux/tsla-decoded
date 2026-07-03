@@ -1,0 +1,39 @@
+# TSLA price-action forensics configuration
+symbol: TSLA
+
+target:            # week under investigation (inclusive)
+  start: "2026-06-29"
+  end: "2026-07-02"
+
+baseline:          # window for intraday seasonality / beta estimation
+  start: "2026-05-04"
+  end: "2026-06-26"
+
+daily:             # daily context window
+  start: "2026-04-01"
+  end: "2026-07-02"
+
+benchmarks: [SPY, QQQ]
+peers: [RIVN, LCID, NIO]
+
+news:              # catalyst collection window (pad around target week)
+  start: "2026-06-25"
+  end: "2026-07-03"
+
+detection:
+  ret_z_threshold: 4.0        # seasonality-adjusted |return| z to trigger
+  vol_z_threshold: 5.0        # volume z to trigger (needs ret_z >= 2 too)
+  vol_z_ret_min: 2.0
+  merge_gap_minutes: 15       # collapse triggers within this gap into one event
+  vwap_dev_sigma: 2.0         # anchored-VWAP drift threshold (in baseline daily sigmas)
+  gap_z_threshold: 2.5        # overnight gap vs baseline daily vol
+  major_event_z: 4.0          # events at/above this must be attributed for convergence
+
+loop:
+  max_iters: 5
+  confidence_threshold: 0.70
+  min_confidence_delta: 0.02
+
+paths:
+  cache_dir: data/raw
+  output_dir: output
