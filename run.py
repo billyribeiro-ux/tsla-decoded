@@ -23,6 +23,8 @@ def main() -> None:
     parser.add_argument("--max-iters", type=int, default=None)
     parser.add_argument("--history", action="store_true",
                         help="run the historical delivery-release reaction study instead")
+    parser.add_argument("--deep", action="store_true",
+                        help="run the per-session 1-minute forensic deep dive instead")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -31,6 +33,14 @@ def main() -> None:
         settings.loop["max_iters"] = args.max_iters
 
     client = FMPClient(settings.api_key, settings.cache_dir, refresh=args.refresh)
+
+    if args.deep:
+        from tsla_decoded.deep_dive import run_deep_dive
+        run_deep_dive(client, settings)
+        print(f"\nDone. {client.http_requests} HTTP requests this run.")
+        print(f"Outputs: {settings.output_dir}/deep_dive.md, "
+              f"{settings.output_dir}/charts/deep_1min_*.png")
+        return
 
     if args.history:
         from tsla_decoded.delivery_history import run_history
