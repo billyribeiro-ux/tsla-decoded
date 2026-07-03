@@ -21,6 +21,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--refresh", action="store_true", help="bypass JSON cache")
     parser.add_argument("--max-iters", type=int, default=None)
+    parser.add_argument("--history", action="store_true",
+                        help="run the historical delivery-release reaction study instead")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -29,6 +31,15 @@ def main() -> None:
         settings.loop["max_iters"] = args.max_iters
 
     client = FMPClient(settings.api_key, settings.cache_dir, refresh=args.refresh)
+
+    if args.history:
+        from tsla_decoded.delivery_history import run_history
+        result = run_history(client, settings)
+        print(f"\nDone. {result['stats']['n']} delivery quarters analyzed; "
+              f"{client.http_requests} HTTP requests this run.")
+        print(f"Outputs: {settings.output_dir}/history_report.md, "
+              f"{settings.output_dir}/charts/delivery_reactions.png")
+        return
     inv = Investigation(settings, client)
     state = inv.run()
 
