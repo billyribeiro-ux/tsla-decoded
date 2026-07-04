@@ -28,7 +28,8 @@ input highTestFrac = 0.999;   # bar high >= this * day high counts as testing th
 input cooldownMin = 30;
 input marketOpen = 0930;
 input marketClose = 1600;
-input showLabels = yes;
+input showLabels = no;        # top-corner text readout (relVol/footprint/VWAP side);
+                              # OFF by default so the study shows only the signals
 input testMode = no;          # loosen thresholds so dots appear often — to confirm
                               # the study renders; turn OFF for real signals
 
