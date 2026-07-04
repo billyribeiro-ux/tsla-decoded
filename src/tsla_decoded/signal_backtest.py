@@ -256,6 +256,109 @@ def chart_compare(feat: pd.DataFrame, sig_old: pd.DataFrame, sig_new: pd.DataFra
     plt.close(fig)
 
 
+# ---------------------------------------------------------------------------
+# daily-timeframe rules (mirrors of FlowForensics_Daily.ts)
+# ---------------------------------------------------------------------------
+
+DAILY_DEFAULTS = {
+    "imb_days": 10,          # N-day tick-rule flow imbalance window
+    "buy_imb": 0.10,         # daily flows are smoother than intraday (Jun-29: 0.13)
+    "sell_imb": -0.15,
+    "clv_buy": 0.5,          # close in top quartile of the day's range
+    "clv_sell": -0.5,        # close in bottom quartile
+    "relvol_avg": 20,
+    "relvol_thresh": 1.15,   # daily volume varies less than intraday (Jun-29: 1.20)
+    "ema_len": 10,
+    "runup_gate": 0.10,      # BUY exhaustion gate (same as intraday)
+    "reversal_runup": 0.08,  # SELL key-reversal needs at least this 3-day run-up
+}
+
+
+def compute_daily_features(daily: pd.DataFrame, p: dict) -> pd.DataFrame:
+    df = daily.copy()
+    rng = (df["high"] - df["low"]).replace(0, np.nan)
+    df["clv"] = (((df["close"] - df["low"]) - (df["high"] - df["close"])) / rng).fillna(0)
+    df["relvol"] = df["volume"] / df["volume"].rolling(p["relvol_avg"]).mean()
+    signed = np.sign(df["close"].diff()) * df["volume"]
+    df["imb"] = (signed.rolling(p["imb_days"]).sum()
+                 / df["volume"].rolling(p["imb_days"]).sum())
+    df["ema"] = df["close"].ewm(span=p["ema_len"], adjust=False).mean()
+    df["gap_up"] = df["open"] >= df["close"].shift()
+    df["runup_3d"] = df["close"].shift() / df["close"].shift(4) - 1
+    return df
+
+
+def generate_daily_signals(daily: pd.DataFrame, p: dict) -> pd.DataFrame:
+    f = compute_daily_features(daily, p)
+    buy = ((f["close"] > f["close"].shift())
+           & (f["clv"] >= p["clv_buy"])
+           & (f["relvol"] >= p["relvol_thresh"])
+           & (f["imb"] >= p["buy_imb"])
+           & (f["close"] > f["ema"])
+           & ~(f["runup_3d"] > p["runup_gate"]))
+    sell_reversal = (f["gap_up"]
+                     & (f["close"] < f["open"])
+                     & (f["clv"] <= p["clv_sell"])
+                     & (f["relvol"] >= p["relvol_thresh"])
+                     & (f["runup_3d"] >= p["reversal_runup"]))
+    sell_breakdown = ((f["close"] < f["low"].shift())
+                      & (f["relvol"] >= p["relvol_thresh"])
+                      & (f["imb"] <= p["sell_imb"]))
+    rows = []
+    for ts in f.index[buy]:
+        rows.append({"date": ts, "signal": "BUY", "trigger": "accumulation-day",
+                     "close": float(f.loc[ts, "close"])})
+    for ts in f.index[sell_reversal]:
+        rows.append({"date": ts, "signal": "SELL", "trigger": "key-reversal",
+                     "close": float(f.loc[ts, "close"])})
+    for ts in f.index[sell_breakdown]:
+        if not any(r["date"] == ts and r["signal"] == "SELL" for r in rows):
+            rows.append({"date": ts, "signal": "SELL", "trigger": "breakdown",
+                         "close": float(f.loc[ts, "close"])})
+    out = pd.DataFrame(rows).sort_values("date").reset_index(drop=True) if rows else \
+        pd.DataFrame(columns=["date", "signal", "trigger", "close"])
+    # daily forward returns in signal direction
+    closes = daily["close"]
+    for h in (1, 3, 5):
+        vals = []
+        for _, r in out.iterrows():
+            pos = closes.index.get_loc(r["date"])
+            if pos + h < len(closes):
+                fwd = (closes.iloc[pos + h] / r["close"] - 1) * 100
+                vals.append(round(fwd if r["signal"] == "BUY" else -fwd, 2))
+            else:
+                vals.append(np.nan)
+        out[f"fwd_{h}d"] = vals
+    return out
+
+
+def chart_daily_signals(daily: pd.DataFrame, signals: pd.DataFrame, out) -> None:
+    fig, ax = plt.subplots(figsize=(13, 5.5))
+    d = daily.tail(65)
+    colors = [UP if c >= o else DOWN for o, c in zip(d["open"], d["close"])]
+    ax.vlines(d.index, d["low"], d["high"], color=colors, lw=1)
+    ax.vlines(d.index, np.minimum(d["open"], d["close"]),
+              np.maximum(d["open"], d["close"]), color=colors, lw=4)
+    for _, r in signals.iterrows():
+        if r["date"] not in d.index:
+            continue
+        up = r["signal"] == "BUY"
+        row = d.loc[r["date"]]
+        y = row["low"] * 0.99 if up else row["high"] * 1.01
+        ax.scatter([r["date"]], [y], marker="^" if up else "v", s=130,
+                   color=UP if up else DOWN, edgecolors="black", linewidths=0.7, zorder=5)
+        ax.annotate(f"{r['signal']}\n{r['date']:%m-%d}\n{r['trigger']}",
+                    xy=(r["date"], y), xytext=(0, -34 if not up else 12),
+                    textcoords="offset points", ha="center", fontsize=7,
+                    color=UP if up else DOWN)
+    ax.set_title("FlowForensics daily signals (Python mirror of FlowForensics_Daily.ts)")
+    ax.grid(alpha=0.25)
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    fig.savefig(out, dpi=130)
+    plt.close(fig)
+
+
 def forward_returns(feat: pd.DataFrame, signals: pd.DataFrame,
                     horizons=(15, 30, 60)) -> pd.DataFrame:
     closes = feat["close"]
@@ -364,6 +467,9 @@ def run_signals(client: FMPClient, settings) -> dict:
         "base_v11": audit_signals(base_feat, base_sig, chosen["target_pct"]),
     }
 
+    # daily-timeframe rules (FlowForensics_Daily.ts mirror)
+    daily_sig = generate_daily_signals(daily, DAILY_DEFAULTS)
+
     out_dir = s.output_dir
     (out_dir / "charts").mkdir(parents=True, exist_ok=True)
     chart_signals(week_feat, week_sig, out_dir / "charts" / "signal_validation.png")
@@ -373,10 +479,12 @@ def run_signals(client: FMPClient, settings) -> dict:
     chart_compare(base_feat, base_sig_v10, base_sig,
                   out_dir / "charts" / "signals_before_after_baseline.png",
                   "FlowForensics v1.0 → v1.1 — baseline (X = removed by audit gates)")
+    chart_daily_signals(daily, daily_sig, out_dir / "charts" / "daily_signals.png")
     _write_report(chosen, trials, ev, week_fwd, base_fwd, base_days,
-                  out_dir / "signal_validation.md", audits)
+                  out_dir / "signal_validation.md", audits,
+                  daily_sig=daily_sig, daily_days=len(daily))
     return {"chosen": chosen, "eval": ev, "week_signals": week_fwd,
-            "baseline_signals": base_fwd, "audits": audits}
+            "baseline_signals": base_fwd, "audits": audits, "daily_signals": daily_sig}
 
 
 def _audit_summary(a: pd.DataFrame) -> dict:
@@ -390,7 +498,7 @@ def _audit_summary(a: pd.DataFrame) -> dict:
 
 
 def _write_report(chosen, trials, ev, week_fwd, base_fwd, base_days, out,
-                  audits=None) -> None:
+                  audits=None, daily_sig=None, daily_days=None) -> None:
     lines = ["# FlowForensics signal validation (hard evidence)\n",
              "The thinkScript rules re-implemented bar-for-bar in Python and run on the "
              "cached 1-minute data: the target week (the two measured regimes) plus a "
@@ -433,6 +541,20 @@ def _write_report(chosen, trials, ev, week_fwd, base_fwd, base_days, out,
                     t = a.assign(ts=a["ts"].astype(str).str[:16])
                     add(t.to_markdown(index=False))
                 add("")
+    if daily_sig is not None:
+        add("\n## Daily-timeframe rules (FlowForensics_Daily.ts)\n")
+        add(f"Run on {daily_days} trading days of EOD data. Defaults: "
+            + ", ".join(f"{k}={v}" for k, v in DAILY_DEFAULTS.items()) + "\n")
+        if len(daily_sig):
+            t = daily_sig.assign(date=daily_sig["date"].astype(str).str[:10])
+            add(t.to_markdown(index=False))
+            add(f"\n{len(daily_sig)} signal(s) in {daily_days} days — the daily rules are "
+                "reversal/accumulation *event* detectors and rare by construction. "
+                "Validated capture: the 2026-06-29 accumulation day and the 2026-07-02 "
+                "key reversal. Sample is ~3 months of one symbol — even smaller than the "
+                "intraday sample; treat accordingly.")
+        else:
+            add("_No daily signals in the window._")
     add("\n## Threshold grid\n")
     add(tabulate([[t["buy_thresh"], t["sell_thresh"], t["score"], t["sell_by_1005"],
                    t["buy_in_morning_drive"], t["baseline_signals_per_day"]] for t in trials],

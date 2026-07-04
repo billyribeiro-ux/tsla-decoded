@@ -65,3 +65,49 @@ def test_quiet_tape_stays_quiet():
     feat = compute_features(tape, DEFAULTS)
     sig = generate_signals(feat, DEFAULTS)
     assert len(sig) == 0, f"noise tape produced signals: {sig}"
+
+
+# ---------------------------------------------------------------------------
+# daily rules (FlowForensics_Daily.ts mirror)
+# ---------------------------------------------------------------------------
+
+def _daily_frame(rows):
+    """rows: list of (open, high, low, close, volume)."""
+    idx = pd.bdate_range("2026-03-02", periods=len(rows))
+    return pd.DataFrame(rows, columns=["open", "high", "low", "close", "volume"], index=idx)
+
+
+def _flat_rows(n, price=100.0, vol=5e7):
+    return [(price, price + 0.5, price - 0.5, price, vol)] * n
+
+
+def test_daily_key_reversal_fires_sell():
+    from tsla_decoded.signal_backtest import DAILY_DEFAULTS, generate_daily_signals
+    rows = _flat_rows(30)
+    rows += [(100, 104, 99.5, 103.5, 5.5e7),   # 3-day run-up builds
+             (104, 107, 103.5, 106.5, 5.5e7),
+             (107, 110, 106.5, 109.5, 5.5e7)]
+    rows += [(110.5, 111, 101.5, 102.0, 9e7)]  # gap-up open, huge red close on the low
+    sig = generate_daily_signals(_daily_frame(rows), DAILY_DEFAULTS)
+    sells = sig[sig["signal"] == "SELL"]
+    assert len(sells) == 1 and sells.iloc[0]["trigger"] == "key-reversal"
+
+
+def test_daily_accumulation_fires_buy():
+    from tsla_decoded.signal_backtest import DAILY_DEFAULTS, generate_daily_signals
+    rows = _flat_rows(30)
+    # modest positive drift so 10-day imbalance is positive but run-up stays small
+    for i in range(6):
+        p = 100 + i * 0.4
+        rows.append((p, p + 0.6, p - 0.2, p + 0.4, 5.6e7))
+    rows.append((102.4, 106.5, 102.2, 106.2, 8e7))  # accumulation day: big up, close on high
+    sig = generate_daily_signals(_daily_frame(rows), DAILY_DEFAULTS)
+    buys = sig[sig["signal"] == "BUY"]
+    assert len(buys) >= 1
+    assert buys.iloc[-1]["trigger"] == "accumulation-day"
+
+
+def test_daily_flat_series_quiet():
+    from tsla_decoded.signal_backtest import DAILY_DEFAULTS, generate_daily_signals
+    sig = generate_daily_signals(_daily_frame(_flat_rows(40)), DAILY_DEFAULTS)
+    assert len(sig) == 0

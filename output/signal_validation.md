@@ -109,6 +109,17 @@ Gates added after the per-signal audit: BUY cutoff 15:00, 3-day run-up gate 10%,
 | 2026-06-26 11:17 | BUY      | accumulation      |  381.75 |  1.51 | -0.82 |      -0.64 |      1.25 | target    |
 
 
+## Daily-timeframe rules (FlowForensics_Daily.ts)
+
+Run on 64 trading days of EOD data. Defaults: imb_days=10, buy_imb=0.1, sell_imb=-0.15, clv_buy=0.5, clv_sell=-0.5, relvol_avg=20, relvol_thresh=1.15, ema_len=10, runup_gate=0.1, reversal_runup=0.08
+
+| date       | signal   | trigger          |   close |   fwd_1d |   fwd_3d |   fwd_5d |
+|:-----------|:---------|:-----------------|--------:|---------:|---------:|---------:|
+| 2026-06-29 | BUY      | accumulation-day |  411.84 |     2.13 |    -4.47 |      nan |
+| 2026-07-02 | SELL     | key-reversal     |  393.45 |   nan    |   nan    |      nan |
+
+2 signal(s) in 64 days — the daily rules are reversal/accumulation *event* detectors and rare by construction. Validated capture: the 2026-06-29 accumulation day and the 2026-07-02 key reversal. Sample is ~3 months of one symbol — even smaller than the intraday sample; treat accordingly.
+
 ## Threshold grid
 
 |   buyT |   sellT |   score | sell≤10:05   | buy≤11:00   |   base/day |

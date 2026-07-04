@@ -42,17 +42,16 @@ The measured signatures compiled into thinkScript for thinkorswim, validated
 bar-for-bar against the cached 1-minute data (`python run.py --signals`,
 results in `output/signal_validation.md`):
 
-- **`FlowForensics_Signals.ts`** (upper study) — BUY arrow on the Jun-29
-  accumulation signature (above anchored VWAP + flow imbalance ≥ +0.20 +
-  swelling relative volume + strong closes + day signed volume at highs);
-  SELL arrow on the Jul-2 signatures (gap-up open rejected with day-anchored
-  imbalance ≤ −0.30 in the first 75 min, or sustained below-VWAP distribution
-  with a failed reclaim). Includes VWAP cloud, flow labels, alerts, optional
-  bar painting.
-- **`FlowForensics_Flow.ts`** (lower study) — the order-flow evidence panel:
-  imbalance histogram with thresholds, day-anchored imbalance, relative volume.
-- **`FlowForensics_Strategy.ts`** — AddOrder strategy version for thinkorswim's
-  built-in backtest report (long + optional short, auto-flatten 15:55).
+| file | chart | what it does |
+|---|---|---|
+| `FlowForensics_Signals.ts` | intraday (1/5-min) upper | BUY/SELL arrows: Jun-29 accumulation signature (above anchored VWAP, imbalance ≥ +0.20, swelling volume, strong closes, day signed volume at highs) and Jul-2 signatures (gap-up rejected below prior-session VWAP with day imbalance ≤ −0.30, or below-VWAP distribution with failed reclaim); VWAP cloud, labels, alerts, v1.1 audit gates |
+| `FlowForensics_Flow.ts` | intraday lower | the order-flow evidence panel **with the same BUY/SELL arrows**: zone-colored imbalance histogram, day-anchored imbalance, relative volume, thresholds |
+| `FlowForensics_Strategy.ts` | intraday, Strategies tab | AddOrder backtest version: long + optional short, profit target, VWAP-cross stop, auto-flatten 15:55 |
+| `FlowForensics_Daily.ts` | daily upper | daily translations: BUY = accumulation day (close in top quartile, volume > 1.15× 20d, positive 10d flow, above 10-EMA, not extended); SELL = gap-up key reversal after ≥8% run-up, or heavy-volume breakdown below prior low |
+| `FlowForensics_Daily_Flow.ts` | daily lower | daily flow panel with the same signals: 10d imbalance histogram, relative volume, 3-day run-up vs gates |
+
+Daily validation: on 64 sessions (Apr–Jul 2026) exactly two daily signals
+fired — BUY on 2026-06-29 and SELL (key reversal) on 2026-07-02.
 
 Install: thinkorswim → Charts → Studies → Edit Studies → Create → paste the
 file contents → OK (strategy goes under the Strategies tab). Suggested setup:
