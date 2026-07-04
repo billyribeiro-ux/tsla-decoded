@@ -41,10 +41,12 @@ def test_accumulation_tape_fires_buy():
 
 
 def test_gap_up_rejection_fires_sell():
-    # day 1 flat around 100; day 2 gaps up to 101, HOD in first minutes, then heavy dump
+    # day 1 flat around 100; day 2 gaps up to 101, HOD in first minutes, then a
+    # steep dump that loses the prior session's VWAP (~100) inside the open window
     n = 390
     closes = np.r_[np.linspace(101.0, 101.5, 4),          # opening pop = early HOD
-                   np.linspace(101.4, 96.0, n - 4)]       # relentless slide
+                   np.linspace(101.4, 97.0, 56),          # fast liquidation wave
+                   np.linspace(97.0, 96.0, n - 60)]       # afternoon drift
     vol = np.where(np.arange(n) < 60, 4e5, 1.5e5)         # front-loaded volume
     d2 = _frame("2026-06-02", closes, vol,
                 opens=np.r_[101.0, closes[:-1]],

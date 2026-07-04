@@ -26,6 +26,8 @@ input openWindowMin = 75;     # opening-rejection valid inside first N minutes
 input openHighMin = 15;       # day high must be set within first N minutes
 input belowVwapBars = 15;     # consecutive bars below VWAP for distribution trigger
 input cooldownBars = 30;      # min bars between same-side signals
+input buyCutoffTime = 1500;   # EST HHMM — no fresh BUY after this (no runway left)
+input runupGate = 0.10;       # no BUY when the 3-day run-up exceeds this (exhaustion)
 input marketOpen = 0930;      # EST, HHMM
 input marketClose = 1600;     # EST, HHMM
 input paintBars = no;
@@ -89,8 +91,20 @@ def failedReclaim = Highest(touchedFromBelow, 10) > 0;
 def gapUp = open(period = AggregationPeriod.DAY)
             >= close(period = AggregationPeriod.DAY)[1];
 
+# v1.1 audit gates -----------------------------------------------------------
+# prior session's final anchored VWAP: captured at each session's first bar
+def prevDayVWAP = CompoundValue(1,
+    if newSession and cumV[1] > 0 then cumPV[1] / cumV[1] else prevDayVWAP[1],
+    Double.NaN);
+# 3-day run-up ending at the prior close (exhaustion context)
+def closeD = close(period = AggregationPeriod.DAY);
+def runup3 = if !IsNaN(closeD[4]) and closeD[4] != 0
+             then closeD[1] / closeD[4] - 1 else 0;
+
 # ---------------------------------------------------------------- signals
 def buyCond = isRTH and minOfDay >= imbWindow
+    and SecondsTillTime(buyCutoffTime) > 0
+    and runup3 <= runupGate
     and aboveVWAP
     and imb >= buyThresh
     and relVol >= relVolThresh
@@ -100,6 +114,7 @@ def buyCond = isRTH and minOfDay >= imbWindow
 def sellOpenRejection = isRTH and minOfDay >= 5 and minOfDay <= openWindowMin
     and hodMin <= openHighMin
     and gapUp
+    and (IsNaN(prevDayVWAP) or close < prevDayVWAP)
     and !aboveVWAP
     and dayImb <= sellThresh
     and relVol >= relVolThresh;

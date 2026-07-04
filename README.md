@@ -58,9 +58,12 @@ Install: thinkorswim → Charts → Studies → Edit Studies → Create → past
 file contents → OK (strategy goes under the Strategies tab). Suggested setup:
 1-min or 5-min chart, regular trading hours.
 
-Validated event capture with shipped defaults: SELL fired 2026-07-02 **09:35**
-(the −8% day, minutes into the liquidation), BUY fired 2026-06-29 **10:33**
-(the +8% accumulation day), ~0.9 signals/day on the quiet baseline. These
+Validated event capture with shipped defaults (v1.1, post-audit gates: 15:00
+BUY cutoff, 3-day run-up gate, prior-session-VWAP context for opening
+rejections): SELL fired 2026-07-02 **09:35** (the −8% day, minutes into the
+liquidation), BUY fired 2026-06-29 **10:33** (the +8% accumulation day),
+0.67 signals/day on the quiet baseline; target-week signals 88% profitable
+to session close (see `output/signal_validation.md` for the audit). These
 rules encode one measured week + a 2-week baseline on one symbol — run the
 strategy report over longer history before trusting them. Not investment advice.
 
