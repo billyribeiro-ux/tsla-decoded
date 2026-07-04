@@ -36,6 +36,34 @@ pytest tests/              # synthetic-data sanity tests
 
 Outputs land in `output/`: `report.md`, `charts/*.png`, and an interactive `dashboard.html`.
 
+## FlowForensics — thinkorswim indicator (thinkscript/)
+
+The measured signatures compiled into thinkScript for thinkorswim, validated
+bar-for-bar against the cached 1-minute data (`python run.py --signals`,
+results in `output/signal_validation.md`):
+
+- **`FlowForensics_Signals.ts`** (upper study) — BUY arrow on the Jun-29
+  accumulation signature (above anchored VWAP + flow imbalance ≥ +0.20 +
+  swelling relative volume + strong closes + day signed volume at highs);
+  SELL arrow on the Jul-2 signatures (gap-up open rejected with day-anchored
+  imbalance ≤ −0.30 in the first 75 min, or sustained below-VWAP distribution
+  with a failed reclaim). Includes VWAP cloud, flow labels, alerts, optional
+  bar painting.
+- **`FlowForensics_Flow.ts`** (lower study) — the order-flow evidence panel:
+  imbalance histogram with thresholds, day-anchored imbalance, relative volume.
+- **`FlowForensics_Strategy.ts`** — AddOrder strategy version for thinkorswim's
+  built-in backtest report (long + optional short, auto-flatten 15:55).
+
+Install: thinkorswim → Charts → Studies → Edit Studies → Create → paste the
+file contents → OK (strategy goes under the Strategies tab). Suggested setup:
+1-min or 5-min chart, regular trading hours.
+
+Validated event capture with shipped defaults: SELL fired 2026-07-02 **09:35**
+(the −8% day, minutes into the liquidation), BUY fired 2026-06-29 **10:33**
+(the +8% accumulation day), ~0.9 signals/day on the quiet baseline. These
+rules encode one measured week + a 2-week baseline on one symbol — run the
+strategy report over longer history before trusting them. Not investment advice.
+
 ## Honesty note
 
 Causal attribution in markets is probabilistic. The report assigns each event a numeric

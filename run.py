@@ -27,6 +27,8 @@ def main() -> None:
                         help="run the per-session 1-minute forensic deep dive instead")
     parser.add_argument("--surface", action="store_true",
                         help="run the beneath-the-surface microstructure forensics instead")
+    parser.add_argument("--signals", action="store_true",
+                        help="validate the FlowForensics thinkScript rules on cached data")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -35,6 +37,14 @@ def main() -> None:
         settings.loop["max_iters"] = args.max_iters
 
     client = FMPClient(settings.api_key, settings.cache_dir, refresh=args.refresh)
+
+    if args.signals:
+        from tsla_decoded.signal_backtest import run_signals
+        result = run_signals(client, settings)
+        print(f"\nDone. Event capture: {result['eval']}")
+        print(f"Outputs: {settings.output_dir}/signal_validation.md, "
+              f"{settings.output_dir}/charts/signal_validation.png")
+        return
 
     if args.surface:
         from tsla_decoded.microstructure import run_surface
