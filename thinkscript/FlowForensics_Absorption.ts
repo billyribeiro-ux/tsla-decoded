@@ -29,6 +29,8 @@ input cooldownMin = 30;
 input marketOpen = 0930;
 input marketClose = 1600;
 input showLabels = yes;
+input testMode = no;          # loosen thresholds so dots appear often — to confirm
+                              # the study renders; turn OFF for real signals
 
 # ---- timeframe (works on any intraday chart) ----
 def aggMin = GetAggregationPeriod() / 60000;
@@ -58,7 +60,10 @@ def dayHigh = CompoundValue(1, if !isRTH then dayHigh[1] else if newSession then
 def testingHigh = high >= dayHigh * highTestFrac;
 
 # a REJECTION / ABSORPTION bar: high volume, upper-wick rejection, at a session high
-def rejectionBar = isRTH and relVol >= relVolThr and upWick >= wickThr and testingHigh;
+# testMode loosens the gates so you can SEE dots on any day and confirm rendering
+def rvThr = if testMode then 1.1 else relVolThr;
+def wkThr = if testMode then 0.15 else wickThr;
+def rejectionBar = isRTH and relVol >= rvThr and upWick >= wkThr and testingHigh;
 # a DISTRIBUTION bar: elevated volume, closes below VWAP and below its open
 def distribBar = isRTH and relVol >= distribRelVol and belowVWAP and close < open;
 
@@ -74,8 +79,9 @@ def sellFire = sellEdge and since == 0;
 
 # ---- plots ----
 plot Rejection = if rejectionBar then high * 1.001 else Double.NaN;   # the iceberg's shadow
-Rejection.SetPaintingStrategy(PaintingStrategy.BOOLEAN_POINTS);
-Rejection.SetDefaultColor(Color.ORANGE); Rejection.SetLineWeight(3);
+Rejection.SetPaintingStrategy(PaintingStrategy.POINTS);   # POINTS (not BOOLEAN_POINTS) so the dot renders on the price overlay
+Rejection.SetDefaultColor(Color.ORANGE);
+Rejection.SetLineWeight(5);
 
 plot Sell = if sellFire then high * 1.002 else Double.NaN;
 Sell.SetPaintingStrategy(PaintingStrategy.ARROW_DOWN);
