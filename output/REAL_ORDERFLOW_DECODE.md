@@ -84,6 +84,52 @@ the demand that got absorbed. **Modest aggressor imbalance + large directional
 price move = the fingerprint of working a big order passively — the opposite of
 panic, and the essence of distribution.**
 
-*Nasdaq-lit only; consolidated tape and dark pools not captured — the imbalance
-percentages are representative, the absolute share counts are a Nasdaq subset.
-Reproduce: `python scripts/real_orderflow.py`. Not investment advice.*
+---
+
+## 10-level order-book reconstruction (July 2 open, MBP-10)
+
+To see the "stacked offers" directly, I reconstructed the full 10-level Nasdaq
+book for the opening 90 minutes — 1.14M book snapshots ($0.16). It **refined my
+own earlier inference.** I had said the seller was "stacked on the offer." The book
+shows that was true for only **the first ~3 minutes** — and then the opposite.
+
+**What the book actually shows (time-weighted, 09:30–11:00):**
+
+| window | bid depth | ask depth | book imbalance |
+|--------|-----------|-----------|----------------|
+| 09:30–09:33 (failed PM-high challenge) | 1,164 | **1,569 (1.35× ask)** | ask-heavy |
+| 09:30–11:00 overall | ~1,200 | ~950 | **+0.045 (slightly BID-heavy)** |
+| time ask-heavy | — | — | **only 45%** |
+
+The chart (`charts/book_imbalance_jul2.png`) makes it unmistakable: as price falls
+8%, the displayed book is **predominantly green — bid-heavy — the whole way down.**
+
+**This is the real signature, and it's more sophisticated than a visible wall:**
+
+1. At the open there *was* a brief visible offer stack (1.35× ask, 09:30–09:33) —
+   that capped the failed pre-market-high challenge. Real, but it lasted 3 minutes.
+2. After that, **the displayed book was bid-heavy while price fell 8%.** More bids
+   showing than offers — dip-buyers stacking the book — and price dropped anyway.
+3. A market that falls while showing *more visible demand than supply*, on only
+   **−8.4% aggressor imbalance**, can only be explained by **hidden supply**: iceberg
+   orders (displaying a small "tip," auto-refreshing hidden reserve at each level)
+   and midpoint/dark executions. The seller was **invisible on both the aggressor
+   tape *and* the displayed book — by design.**
+
+**The corrected mechanism:** the July 2 distribution was not a crude sell wall
+anyone could see. It was **hidden, iceberg-style institutional selling** — the
+seller showed almost nothing on the book, crossed the spread only modestly, and let
+stacked dip-buyer bids get absorbed by reserve size. That is the most sophisticated
+way a large holder exits: invisible to the tape-readers, price walked down a level
+at a time. The only moment they tipped their hand was the 3-minute offer that
+rejected the open. Everything after was a ghost.
+
+This is why every cruder lens looked "orderly": below-baseline price impact,
+modest aggressor imbalance, no visible wall — all the same fact seen from different
+angles. **The seller was hiding, and the book proves it.**
+
+*Total Databento spend this decode: ~$0.64 (trades $0.25 + L1 quotes $0.23 +
+L2 depth $0.16). Nasdaq-lit only; consolidated tape and dark pools not captured —
+imbalance percentages are representative, absolute share counts are a Nasdaq
+subset. Reproduce: `scripts/real_orderflow.py`, `scripts/orderbook_depth.py`.
+Not investment advice.*
