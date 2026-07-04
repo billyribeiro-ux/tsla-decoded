@@ -29,6 +29,8 @@ def main() -> None:
                         help="run the beneath-the-surface microstructure forensics instead")
     parser.add_argument("--signals", action="store_true",
                         help="validate the FlowForensics thinkScript rules on cached data")
+    parser.add_argument("--oos", action="store_true",
+                        help="out-of-sample test: frozen v1.1 rules on the prior 2 months")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -37,6 +39,15 @@ def main() -> None:
         settings.loop["max_iters"] = args.max_iters
 
     client = FMPClient(settings.api_key, settings.cache_dir, refresh=args.refresh)
+
+    if args.oos:
+        from tsla_decoded.signal_backtest import run_oos
+        result = run_oos(client, settings)
+        print(f"\nDone. {result['days']} days ({result['oos_days']} strictly OOS), "
+              f"{len(result['audit'])} signals; {client.http_requests} HTTP requests.")
+        print(f"Outputs: {settings.output_dir}/oos_validation.md, "
+              f"{settings.output_dir}/charts/oos_signals.png")
+        return
 
     if args.signals:
         from tsla_decoded.signal_backtest import run_signals

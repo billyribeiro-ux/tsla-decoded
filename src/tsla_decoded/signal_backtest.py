@@ -497,6 +497,116 @@ def _audit_summary(a: pd.DataFrame) -> dict:
             "mean_managed": f"{a['managed'].mean():+.2f}%"}
 
 
+def run_oos(client: FMPClient, settings, start: str = "2026-05-04",
+            end: str = "2026-06-26") -> dict:
+    """Out-of-sample test: shipped v1.1 defaults, frozen, on the prior two months.
+
+    Days on/after `insample_from` were the tuning baseline and are flagged;
+    everything earlier is data the rules have never seen.
+    """
+    s = settings
+    insample_from = pd.Timestamp(
+        (pd.Timestamp(s.baseline_end) - pd.Timedelta(days=13)).date())
+    bars = dl.intraday(client, s.symbol, "1min", start, end)
+    daily = dl.daily(client, s.symbol, s.daily_start, s.target_end)
+    feat = compute_features(bars, DEFAULTS, daily["close"])
+    sig = generate_signals(feat, DEFAULTS)
+    aud = audit_signals(feat, sig, DEFAULTS["target_pct"])
+    if not aud.empty:
+        aud["sample"] = np.where(
+            pd.to_datetime(aud["ts"].dt.date) >= insample_from, "baseline", "OOS")
+    n_days = len({t.date() for t in feat.index})
+    n_oos_days = len({t.date() for t in feat.index
+                      if pd.Timestamp(t.date()) < insample_from})
+    daily_win = daily.loc[start:end]
+    daily_sig = generate_daily_signals(daily, DAILY_DEFAULTS)
+    daily_sig = daily_sig[(daily_sig["date"] >= pd.Timestamp(start))
+                          & (daily_sig["date"] <= pd.Timestamp(end))]
+
+    out_dir = s.output_dir
+    (out_dir / "charts").mkdir(parents=True, exist_ok=True)
+    _chart_oos(daily_win, aud, insample_from, out_dir / "charts" / "oos_signals.png")
+    _write_oos_report(aud, daily_sig, n_days, n_oos_days, insample_from,
+                      start, end, out_dir / "oos_validation.md")
+    return {"audit": aud, "daily_signals": daily_sig,
+            "days": n_days, "oos_days": n_oos_days}
+
+
+def _chart_oos(daily_win: pd.DataFrame, aud: pd.DataFrame, insample_from, out) -> None:
+    fig, (ax, axr) = plt.subplots(2, 1, figsize=(13, 8), sharex=False,
+                                  gridspec_kw={"height_ratios": [2, 1]})
+    ax.plot(daily_win.index, daily_win["close"], color="#1565c0", lw=1.2)
+    ax.axvspan(insample_from, daily_win.index[-1], color="#fff59d", alpha=0.3,
+               label="tuning baseline (in-sample)")
+    for _, r in aud.iterrows():
+        up = r["signal"] == "BUY"
+        day = pd.Timestamp(r["ts"].date())
+        y = daily_win.loc[daily_win.index == day, "close"]
+        if y.empty:
+            continue
+        ax.scatter([day], [y.iloc[0]], marker="^" if up else "v", s=90,
+                   color=UP if up else DOWN, edgecolors="black",
+                   linewidths=0.6, zorder=5)
+    ax.set_title("Out-of-sample test — daily closes with intraday signal days marked")
+    ax.legend(fontsize=8)
+    ax.grid(alpha=0.25)
+
+    if not aud.empty:
+        labels = [f"{r['ts']:%m-%d %H:%M}\n{r['signal']}" for _, r in aud.iterrows()]
+        colors = [UP if v > 0 else DOWN for v in aud["managed"]]
+        hatches = ["" if s_ == "OOS" else "//" for s_ in aud["sample"]]
+        bars_ = axr.bar(range(len(aud)), aud["managed"], color=colors, alpha=0.85)
+        for b, h in zip(bars_, hatches):
+            b.set_hatch(h)
+        axr.set_xticks(range(len(aud)), labels, fontsize=6.5, rotation=45)
+        axr.axhline(0, color="#616161", lw=0.8)
+        axr.set_ylabel("managed return %")
+        axr.set_title("Per-signal managed outcome (hatched = in-sample baseline days)")
+        axr.grid(alpha=0.25, axis="y")
+    fig.tight_layout()
+    fig.savefig(out, dpi=130)
+    plt.close(fig)
+
+
+def _write_oos_report(aud: pd.DataFrame, daily_sig: pd.DataFrame, n_days: int,
+                      n_oos_days: int, insample_from, start: str, end: str, out) -> None:
+    lines = [f"# Out-of-sample validation: {start} → {end}\n",
+             "The shipped FlowForensics v1.1 defaults — frozen, no re-tuning — run on the "
+             f"two months before the decoded week ({n_days} trading days, of which "
+             f"{n_oos_days} precede {insample_from.date()} and are strictly out-of-sample; "
+             "later days were the tuning baseline and are marked).\n"]
+    add = lines.append
+    for scope, dfp in (("STRICT OUT-OF-SAMPLE", aud[aud.get("sample", "") == "OOS"]
+                        if not aud.empty else aud),
+                       ("baseline (in-sample)", aud[aud.get("sample", "") == "baseline"]
+                        if not aud.empty else aud)):
+        add(f"## {scope}\n")
+        if dfp.empty:
+            add("_No signals._\n")
+            continue
+        t = dfp.assign(ts=dfp["ts"].astype(str).str[:16])
+        add(t.to_markdown(index=False))
+        for side in ("BUY", "SELL"):
+            g = dfp[dfp["signal"] == side]
+            if len(g):
+                add(f"- **{side}**: n={len(g)}, managed win rate "
+                    f"{(g['managed'] > 0).mean():.0%}, mean managed "
+                    f"{g['managed'].mean():+.2f}%, mean to-close "
+                    f"{g['to_close'].mean():+.2f}%, mean MFE {g['mfe'].mean():+.2f}%")
+        add("")
+    add("## Daily rules over the window\n")
+    if len(daily_sig):
+        add(daily_sig.assign(date=daily_sig["date"].astype(str).str[:10]).to_markdown(index=False))
+    else:
+        add("_No daily signals in the window (they are event detectors; the decoded "
+            "week's accumulation/reversal pair remains their only firing in 2026 data)._")
+    add("\n**Read honestly:** this is one symbol over two months. A positive OOS "
+        "expectancy here supports the decoded concept; it is still not a guarantee of "
+        "future performance. Not investment advice.")
+    out.write_text("\n".join(lines))
+    log.info("OOS validation written to %s", out)
+
+
 def _write_report(chosen, trials, ev, week_fwd, base_fwd, base_days, out,
                   audits=None, daily_sig=None, daily_days=None) -> None:
     lines = ["# FlowForensics signal validation (hard evidence)\n",
