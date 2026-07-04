@@ -53,6 +53,18 @@ results in `output/signal_validation.md`):
 Daily validation: on 64 sessions (Apr–Jul 2026) exactly two daily signals
 fired — BUY on 2026-06-29 and SELL (key reversal) on 2026-07-02.
 
+**v1.2 (arrows fix):** the intraday studies now specify every window in
+**minutes** and convert to bars via `GetAggregationPeriod()`, so signals fire
+identically on 1-min, 5-min, or any intraday timeframe (previously the
+bar-count windows were tuned for 1-min and never triggered on 5-min). Prior-day
+close/VWAP and the 3-day run-up are derived from the session stream — no
+secondary (daily) aggregation, which used to return NaN on charts with little
+history and silently suppressed every SELL arrow. The distribution SELL no
+longer requires a VWAP retouch. Set `debugMode = yes` to loosen the gates and
+draw confirmation bubbles if you want to verify the study is live on a quiet
+day. Validated: both 1-min and 5-min catch the Jul-2 SELL (09:35) and Jun-29
+BUY — see the "Timeframe robustness" section of `output/signal_validation.md`.
+
 Install: thinkorswim → Charts → Studies → Edit Studies → Create → paste the
 file contents → OK (strategy goes under the Strategies tab). Suggested setup:
 1-min or 5-min chart, regular trading hours.

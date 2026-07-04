@@ -111,3 +111,41 @@ def test_daily_flat_series_quiet():
     from tsla_decoded.signal_backtest import DAILY_DEFAULTS, generate_daily_signals
     sig = generate_daily_signals(_daily_frame(_flat_rows(40)), DAILY_DEFAULTS)
     assert len(sig) == 0
+
+
+# ---------------------------------------------------------------------------
+# timeframe robustness (v1.2): the same signature must fire at 1-min AND 5-min
+# ---------------------------------------------------------------------------
+
+def test_distribution_fires_at_1min_and_5min():
+    """A gap-up-then-liquidation day must fire SELL whether bars are 1-min or 5-min."""
+    from tsla_decoded.signal_backtest import (
+        resample_intraday, scale_params, compute_features, generate_signals)
+    n = 390
+    closes = np.r_[np.linspace(101.0, 101.5, 4),
+                   np.linspace(101.4, 97.0, 56),
+                   np.linspace(97.0, 96.0, n - 60)]
+    vol = np.where(np.arange(n) < 60, 4e5, 1.5e5)
+    d2 = _frame("2026-06-02", closes, vol,
+                opens=np.r_[101.0, closes[:-1]],
+                highs=closes + 0.02, lows=closes - 0.02)
+    tape = pd.concat([_flat_day("2026-06-01"), d2])
+
+    fired = {}
+    for label, bar_min, rule in (("1min", 1, None), ("5min", 5, "5min")):
+        bars = tape if rule is None else resample_intraday(tape, rule)
+        p = scale_params(DEFAULTS, bar_min)
+        sig = generate_signals(compute_features(bars, p), p)
+        sells = sig[(sig["signal"] == "SELL")
+                    & (sig["ts"].dt.date == pd.Timestamp("2026-06-02").date())]
+        fired[label] = len(sells)
+    assert fired["1min"] >= 1, "SELL missing at 1-min"
+    assert fired["5min"] >= 1, "SELL missing at 5-min (the reported bug)"
+
+
+def test_scale_params_converts_minutes_to_bars():
+    from tsla_decoded.signal_backtest import scale_params
+    p5 = scale_params(DEFAULTS, 5)
+    assert p5["imb_window"] == round(DEFAULTS["imb_window"] / 5)  # 30 -> 6
+    assert p5["below_vwap_bars"] == round(DEFAULTS["below_vwap_bars"] / 5)  # 15 -> 3
+    assert p5["open_window_min"] == DEFAULTS["open_window_min"]  # minute gate unchanged

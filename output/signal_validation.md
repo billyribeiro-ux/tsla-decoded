@@ -109,6 +109,18 @@ Gates added after the per-signal audit: BUY cutoff 15:00, 3-day run-up gate 10%,
 | 2026-06-26 11:17 | BUY      | accumulation      |  381.75 |  1.51 | -0.82 |      -0.64 |      1.25 | target    |
 
 
+## Timeframe robustness (v1.2 — time-based windows)
+
+The .ts windows are now specified in MINUTES and converted to bars via GetAggregationPeriod(), so the same signatures fire on any intraday timeframe. Event capture with identical minute-windows:
+
+| timeframe   |   total_signals | jul2_SELL        | jun29_BUY        |
+|:------------|----------------:|:-----------------|:-----------------|
+| 1-min       |               8 | 2026-07-02 09:35 | 2026-06-29 10:33 |
+| 5-min       |              13 | 2026-07-02 09:35 | 2026-06-29 10:30 |
+
+Both timeframes catch the Jul-2 SELL and Jun-29 BUY — the fix for the "no arrows on 5-min" bug.
+
+
 ## Daily-timeframe rules (FlowForensics_Daily.ts)
 
 Run on 64 trading days of EOD data. Defaults: imb_days=10, buy_imb=0.1, sell_imb=-0.15, clv_buy=0.5, clv_sell=-0.5, relvol_avg=20, relvol_thresh=1.15, ema_len=10, runup_gate=0.1, reversal_runup=0.08
@@ -124,20 +136,20 @@ Run on 64 trading days of EOD data. Defaults: imb_days=10, buy_imb=0.1, sell_imb
 
 |   buyT |   sellT |   score | sell≤10:05   | buy≤11:00   |   base/day |
 |--------|---------|---------|--------------|-------------|------------|
-|   0.15 |   -0.15 |    3.56 | True         | True        |       0.89 |
-|   0.15 |   -0.2  |    3.56 | True         | True        |       0.89 |
+|   0.15 |   -0.15 |    3.39 | True         | True        |       1.22 |
+|   0.15 |   -0.2  |    3.44 | True         | True        |       1.11 |
 |   0.15 |   -0.25 |    3.67 | True         | True        |       0.67 |
 |   0.15 |   -0.3  |    3.67 | True         | True        |       0.67 |
-|   0.2  |   -0.15 |    3.56 | True         | True        |       0.89 |
-|   0.2  |   -0.2  |    3.56 | True         | True        |       0.89 |
+|   0.2  |   -0.15 |    3.39 | True         | True        |       1.22 |
+|   0.2  |   -0.2  |    3.44 | True         | True        |       1.11 |
 |   0.2  |   -0.25 |    3.67 | True         | True        |       0.67 |
 |   0.2  |   -0.3  |    3.67 | True         | True        |       0.67 |
-|   0.25 |   -0.15 |    3.56 | True         | True        |       0.89 |
-|   0.25 |   -0.2  |    3.56 | True         | True        |       0.89 |
+|   0.25 |   -0.15 |    3.39 | True         | True        |       1.22 |
+|   0.25 |   -0.2  |    3.44 | True         | True        |       1.11 |
 |   0.25 |   -0.25 |    3.67 | True         | True        |       0.67 |
 |   0.25 |   -0.3  |    3.67 | True         | True        |       0.67 |
-|   0.3  |   -0.15 |    3.56 | True         | True        |       0.89 |
-|   0.3  |   -0.2  |    3.56 | True         | True        |       0.89 |
+|   0.3  |   -0.15 |    3.39 | True         | True        |       1.22 |
+|   0.3  |   -0.2  |    3.44 | True         | True        |       1.11 |
 |   0.3  |   -0.25 |    3.67 | True         | True        |       0.67 |
 |   0.3  |   -0.3  |    3.67 | True         | True        |       0.67 |
 

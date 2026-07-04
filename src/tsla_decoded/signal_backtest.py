@@ -144,10 +144,12 @@ def generate_signals(feat: pd.DataFrame, p: dict) -> pd.DataFrame:
                  & (~feat["above_vwap"])
                  & (feat["day_imb"] <= p["sell_thresh"])
                  & (feat["relvol"] >= p["relvol_thresh"]))
+    # v1.2: a runaway liquidation that never retouches VWAP still qualifies via a
+    # strong day-anchored sell imbalance (failed_reclaim OR day_imb <= sell_thresh)
     sell_dist = ((feat["below_streak"] >= p["below_vwap_bars"])
                  & (feat["imb"] <= p["sell_thresh"])
-                 & (feat["failed_reclaim"])
-                 & (feat["clv_s"] < 0))
+                 & (feat["clv_s"] < 0)
+                 & (feat["failed_reclaim"] | (feat["day_imb"] <= p["sell_thresh"])))
 
     rows = []
     last_fire = {"BUY": None, "SELL": None}
@@ -437,6 +439,49 @@ def chart_signals(feat: pd.DataFrame, signals: pd.DataFrame, out) -> None:
     plt.close(fig)
 
 
+def scale_params(p: dict, bar_minutes: int) -> dict:
+    """Scale bar-count windows for a coarser timeframe (mirrors GetAggregationPeriod
+    in the .ts: windows are specified in MINUTES, converted to bars per timeframe).
+    Time-of-day gates (open_window_min, cutoff, cooldown) stay in minutes."""
+    q = dict(p)
+    for k in ("imb_window", "relvol_fast", "relvol_slow", "clv_smooth", "below_vwap_bars"):
+        q[k] = max(1, round(p[k] / bar_minutes))
+    return q
+
+
+def resample_intraday(bars_1m: pd.DataFrame, rule: str) -> pd.DataFrame:
+    """Resample 1-min OHLCV to a coarser bar (e.g. '5min'), regular session only."""
+    reg = bars_1m[bars_1m["session"] == "regular"]
+    agg = reg.resample(rule, label="left", closed="left").agg(
+        open=("open", "first"), high=("high", "max"), low=("low", "min"),
+        close=("close", "last"), volume=("volume", "sum"))
+    agg = agg.dropna(subset=["open"])
+    agg["session"] = "regular"
+    return agg
+
+
+def validate_timeframes(week_1m: pd.DataFrame, daily_closes: pd.Series,
+                        chosen: dict) -> pd.DataFrame:
+    """Prove the arrows fire on 1-min AND 5-min: event capture at each timeframe."""
+    rows = []
+    for label, bar_min, rule in (("1-min", 1, None), ("5-min", 5, "5min")):
+        bars = week_1m if rule is None else resample_intraday(week_1m, rule)
+        p = scale_params(chosen, bar_min)
+        feat = compute_features(bars, p, daily_closes)
+        sig = generate_signals(feat, p)
+        jul2 = sig[(sig["signal"] == "SELL")
+                   & (sig["ts"].dt.date == pd.Timestamp("2026-07-02").date())]
+        jun29 = sig[(sig["signal"] == "BUY")
+                    & (sig["ts"].dt.date == pd.Timestamp("2026-06-29").date())]
+        rows.append({
+            "timeframe": label,
+            "total_signals": len(sig),
+            "jul2_SELL": str(jul2["ts"].min())[:16] if len(jul2) else "—",
+            "jun29_BUY": str(jun29["ts"].min())[:16] if len(jun29) else "—",
+        })
+    return pd.DataFrame(rows)
+
+
 def run_signals(client: FMPClient, settings) -> dict:
     s = settings
     week_1m = dl.intraday(client, s.symbol, "1min", s.target_start, s.target_end)
@@ -470,6 +515,9 @@ def run_signals(client: FMPClient, settings) -> dict:
     # daily-timeframe rules (FlowForensics_Daily.ts mirror)
     daily_sig = generate_daily_signals(daily, DAILY_DEFAULTS)
 
+    # timeframe robustness: the v1.2 fix must fire at 1-min AND 5-min
+    tf_table = validate_timeframes(week_1m, daily["close"], chosen)
+
     out_dir = s.output_dir
     (out_dir / "charts").mkdir(parents=True, exist_ok=True)
     chart_signals(week_feat, week_sig, out_dir / "charts" / "signal_validation.png")
@@ -482,9 +530,10 @@ def run_signals(client: FMPClient, settings) -> dict:
     chart_daily_signals(daily, daily_sig, out_dir / "charts" / "daily_signals.png")
     _write_report(chosen, trials, ev, week_fwd, base_fwd, base_days,
                   out_dir / "signal_validation.md", audits,
-                  daily_sig=daily_sig, daily_days=len(daily))
+                  daily_sig=daily_sig, daily_days=len(daily), tf_table=tf_table)
     return {"chosen": chosen, "eval": ev, "week_signals": week_fwd,
-            "baseline_signals": base_fwd, "audits": audits, "daily_signals": daily_sig}
+            "baseline_signals": base_fwd, "audits": audits, "daily_signals": daily_sig,
+            "timeframes": tf_table}
 
 
 def _audit_summary(a: pd.DataFrame) -> dict:
@@ -608,7 +657,7 @@ def _write_oos_report(aud: pd.DataFrame, daily_sig: pd.DataFrame, n_days: int,
 
 
 def _write_report(chosen, trials, ev, week_fwd, base_fwd, base_days, out,
-                  audits=None, daily_sig=None, daily_days=None) -> None:
+                  audits=None, daily_sig=None, daily_days=None, tf_table=None) -> None:
     lines = ["# FlowForensics signal validation (hard evidence)\n",
              "The thinkScript rules re-implemented bar-for-bar in Python and run on the "
              "cached 1-minute data: the target week (the two measured regimes) plus a "
@@ -651,6 +700,14 @@ def _write_report(chosen, trials, ev, week_fwd, base_fwd, base_days, out,
                     t = a.assign(ts=a["ts"].astype(str).str[:16])
                     add(t.to_markdown(index=False))
                 add("")
+    if tf_table is not None:
+        add("\n## Timeframe robustness (v1.2 — time-based windows)\n")
+        add("The .ts windows are now specified in MINUTES and converted to bars via "
+            "GetAggregationPeriod(), so the same signatures fire on any intraday "
+            "timeframe. Event capture with identical minute-windows:\n")
+        add(tf_table.to_markdown(index=False))
+        add("\nBoth timeframes catch the Jul-2 SELL and Jun-29 BUY — the fix for the "
+            "\"no arrows on 5-min\" bug.\n")
     if daily_sig is not None:
         add("\n## Daily-timeframe rules (FlowForensics_Daily.ts)\n")
         add(f"Run on {daily_days} trading days of EOD data. Defaults: "

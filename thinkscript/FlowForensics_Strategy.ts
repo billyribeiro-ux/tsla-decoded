@@ -1,23 +1,27 @@
-# FlowForensics_Strategy — backtestable strategy version (thinkorswim Strategies tab)
+# FlowForensics_Strategy (v1.2) — backtestable strategy version (Strategies tab)
 #
 # Same signal logic as FlowForensics_Signals, wired to AddOrder so thinkorswim's
 # built-in strategy report (right-click chart -> Show Report) can evaluate it on
 # any symbol/period. Long entries on the accumulation signature, optional short
 # entries on the distribution/rejection signature, everything flattened by 15:55.
+#
+# v1.2 fixes: TIME-BASED windows via GetAggregationPeriod() (works on any
+# intraday timeframe); prior-day close/VWAP and 3-day run-up derived from the
+# session stream (no secondary aggregation); relaxed distribution SELL.
 # Tuned on one measured week + 2-week baseline — backtest on longer history
 # before any live use. Educational tool — not investment advice.
 
-input imbWindow = 30;
+input imbWindowMin = 30;
 input buyThresh = 0.20;
 input sellThresh = -0.30;
-input relVolFast = 10;
-input relVolSlow = 50;
+input relVolFastMin = 10;
+input relVolSlowMin = 50;
 input relVolThresh = 1.25;
-input clvSmooth = 10;
+input clvSmoothMin = 10;
 input openWindowMin = 75;
 input openHighMin = 15;
-input belowVwapBars = 15;
-input cooldownBars = 30;
+input belowVwapMin = 15;
+input cooldownMin = 30;
 input allowShort = yes;
 input tradeSize = 100;
 input marketOpen = 0930;
@@ -27,6 +31,16 @@ input buyCutoffTime = 1500;   # no fresh long after this
 input runupGate = 0.10;       # no long when 3-day run-up exceeds this
 input targetPct = 1.25;       # managed-exit profit target (%)
 input useVwapStop = yes;      # exit when price crosses VWAP against the position
+
+# ---------------------------------------------------------------- timeframe
+def aggMin = GetAggregationPeriod() / 60000;
+def barsPerMin = if aggMin <= 0 or aggMin > 240 then 1 else 1 / aggMin;
+def imbBars = Max(Round(imbWindowMin * barsPerMin, 0), 1);
+def fastBars = Max(Round(relVolFastMin * barsPerMin, 0), 1);
+def slowBars = Max(Round(relVolSlowMin * barsPerMin, 0), 1);
+def clvBars = Max(Round(clvSmoothMin * barsPerMin, 0), 1);
+def belowBars = Max(Round(belowVwapMin * barsPerMin, 0), 1);
+def cooldownBars = Max(Round(cooldownMin * barsPerMin, 0), 1);
 
 def isRTH = SecondsFromTime(marketOpen) >= 0 and SecondsTillTime(marketClose) > 0;
 def newSession = isRTH and (!isRTH[1] or GetYYYYMMDD() != GetYYYYMMDD()[1]);
@@ -45,8 +59,8 @@ def vwapA = if cumV > 0 then cumPV / cumV else close;
 def aboveVWAP = close > vwapA;
 
 def sv = if !isRTH or newSession then 0 else Sign(close - close[1]) * volume;
-def imb = if Sum(volume, imbWindow) > 0
-          then Sum(sv, imbWindow) / Sum(volume, imbWindow) else 0;
+def imb = if Sum(volume, imbBars) > 0
+          then Sum(sv, imbBars) / Sum(volume, imbBars) else 0;
 def dayCumSV = CompoundValue(1,
     if !isRTH then dayCumSV[1]
     else if newSession then sv
@@ -57,10 +71,10 @@ def cumSVHigh = CompoundValue(1,
     else if newSession then dayCumSV
     else Max(cumSVHigh[1], dayCumSV), dayCumSV);
 
-def relVol = if Average(volume, relVolSlow) > 0
-             then Average(volume, relVolFast) / Average(volume, relVolSlow) else 1;
+def relVol = if Average(volume, slowBars) > 0
+             then Average(volume, fastBars) / Average(volume, slowBars) else 1;
 def clv = if high == low then 0 else ((close - low) - (high - close)) / (high - low);
-def clvS = Average(clv, clvSmooth);
+def clvS = Average(clv, clvBars);
 
 def dayHigh = CompoundValue(1,
     if !isRTH then dayHigh[1]
@@ -74,18 +88,19 @@ def belowStreak = CompoundValue(1,
     if !isRTH or newSession or aboveVWAP then 0
     else belowStreak[1] + 1, 0);
 def failedReclaim = Highest(if !aboveVWAP and high >= vwapA then 1 else 0, 10) > 0;
-def gapUp = open(period = AggregationPeriod.DAY)
-            >= close(period = AggregationPeriod.DAY)[1];
 
-# v1.1 audit gates
+# self-contained daily context (no secondary aggregation)
+def sessionOpen = CompoundValue(1, if newSession then open else sessionOpen[1], open);
+def priorClose = CompoundValue(1, if newSession then close[1] else priorClose[1], close);
 def prevDayVWAP = CompoundValue(1,
-    if newSession and cumV[1] > 0 then cumPV[1] / cumV[1] else prevDayVWAP[1],
-    Double.NaN);
-def closeD = close(period = AggregationPeriod.DAY);
-def runup3 = if !IsNaN(closeD[4]) and closeD[4] != 0
-             then closeD[1] / closeD[4] - 1 else 0;
+    if newSession and cumV[1] > 0 then cumPV[1] / cumV[1] else prevDayVWAP[1], Double.NaN);
+def sc1 = CompoundValue(1, if newSession then priorClose else sc1[1], Double.NaN);
+def sc2 = CompoundValue(1, if newSession then sc1[1] else sc2[1], Double.NaN);
+def sc3 = CompoundValue(1, if newSession then sc2[1] else sc3[1], Double.NaN);
+def runup3 = if !IsNaN(sc3) and sc3 != 0 then sc1 / sc3 - 1 else 0;
+def gapUp = sessionOpen >= priorClose;
 
-def buyCond = isRTH and minOfDay >= imbWindow and aboveVWAP and imb >= buyThresh
+def buyCond = isRTH and minOfDay >= imbWindowMin and aboveVWAP and imb >= buyThresh
     and SecondsTillTime(buyCutoffTime) > 0
     and runup3 <= runupGate
     and relVol >= relVolThresh and clvS > 0 and dayCumSV >= cumSVHigh;
@@ -94,8 +109,8 @@ def sellCond = (isRTH and minOfDay >= 5 and minOfDay <= openWindowMin
         and (IsNaN(prevDayVWAP) or close < prevDayVWAP)
         and !aboveVWAP
         and dayImb <= sellThresh and relVol >= relVolThresh)
-    or (isRTH and belowStreak >= belowVwapBars and imb <= sellThresh
-        and failedReclaim and clvS < 0);
+    or (isRTH and belowStreak >= belowBars and imb <= sellThresh
+        and clvS < 0 and (failedReclaim or dayImb <= sellThresh));
 
 def buyEdge = buyCond and !buyCond[1];
 def sellEdge = sellCond and !sellCond[1];
