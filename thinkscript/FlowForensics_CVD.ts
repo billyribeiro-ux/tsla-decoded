@@ -13,6 +13,9 @@
 # Validated on the target week: no divergence on Mon's accumulation high; bearish
 # divergence at Wed's 11:27 top; and July 2's CVD went negative by 09:32 while price
 # was still ~427 — minutes before the -8%. Educational tool — not investment advice.
+#
+# NOTE: thinkScript identifiers are CASE-INSENSITIVE, so def and plot names must
+# differ (that is why the working variable is cumDelta and the plot is CVD).
 
 declare lower;
 
@@ -33,36 +36,40 @@ def buying = volume * (close - low) / rng;
 def selling = volume * (high - close) / rng;
 def delta = buying - selling;
 
-# session-anchored cumulative delta
-def cvd = CompoundValue(1, if !isRTH then cvd[1] else if newSession then delta
-    else cvd[1] + delta, delta);
+# session-anchored cumulative delta (self-referential -> CompoundValue)
+def cumDelta = CompoundValue(1,
+    if !isRTH then cumDelta[1]
+    else if newSession then delta
+    else cumDelta[1] + delta, delta);
 
-plot CVD = if isRTH then cvd else Double.NaN;
+plot CVD = if isRTH then cumDelta else Double.NaN;
 CVD.SetPaintingStrategy(PaintingStrategy.LINE);
-CVD.AssignValueColor(if cvd >= 0 then Color.GREEN else Color.RED);
+CVD.AssignValueColor(if cumDelta >= 0 then Color.GREEN else Color.RED);
 CVD.SetLineWeight(2);
 plot Zero = if isRTH then 0 else Double.NaN;
 Zero.SetDefaultColor(Color.GRAY);
 
 # distribution divergence: price at a new session high, CVD NOT at its window high
 def priceNewHigh = high >= Highest(high, divBars);
-def cvdNewHigh = cvd >= Highest(cvd, divBars);
-def bearDiv = isRTH and priceNewHigh and !cvdNewHigh;
+def deltaNewHigh = cumDelta >= Highest(cumDelta, divBars);
+def bearDivg = isRTH and priceNewHigh and !deltaNewHigh;
 # accumulation divergence: price at a new low, CVD holding (buyers absorbing)
 def priceNewLow = low <= Lowest(low, divBars);
-def cvdNewLow = cvd <= Lowest(cvd, divBars);
-def bullDiv = isRTH and priceNewLow and !cvdNewLow;
+def deltaNewLow = cumDelta <= Lowest(cumDelta, divBars);
+def bullDivg = isRTH and priceNewLow and !deltaNewLow;
 
-plot BearDiv = if showDivergence and bearDiv then cvd else Double.NaN;
+plot BearDiv = if showDivergence and bearDivg then cumDelta else Double.NaN;
 BearDiv.SetPaintingStrategy(PaintingStrategy.POINTS);
-BearDiv.SetDefaultColor(Color.RED); BearDiv.SetLineWeight(4);
-plot BullDiv = if showDivergence and bullDiv then cvd else Double.NaN;
+BearDiv.SetDefaultColor(Color.RED);
+BearDiv.SetLineWeight(4);
+plot BullDiv = if showDivergence and bullDivg then cumDelta else Double.NaN;
 BullDiv.SetPaintingStrategy(PaintingStrategy.POINTS);
-BullDiv.SetDefaultColor(Color.GREEN); BullDiv.SetLineWeight(4);
+BullDiv.SetDefaultColor(Color.GREEN);
+BullDiv.SetLineWeight(4);
 
-AddLabel(yes, "CVD " + Round(cvd / 1000, 0) + "k",
-    if cvd >= 0 then Color.GREEN else Color.RED);
+AddLabel(yes, "CVD " + Round(cumDelta / 1000, 0) + "k",
+    if cumDelta >= 0 then Color.GREEN else Color.RED);
 AddLabel(yes, "OHLC-approx delta (NOT true order flow / L2)", Color.GRAY);
 
-Alert(bearDiv, "FlowForensics CVD: bearish divergence (price high, delta not = distribution)",
+Alert(bearDivg, "FlowForensics CVD: bearish divergence (price high, delta not = distribution)",
       Alert.BAR, Sound.Bell);
