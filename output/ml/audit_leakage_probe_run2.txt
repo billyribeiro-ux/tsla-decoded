@@ -1,0 +1,9 @@
+=== PROBE 1 FIXED: cross-day rolling bleed on 2026-06-30 ===
+  imb: first non-null multi-day=09:30:00 vs isolated-day=09:59:00 -> 29 early bars valued only via prior-day rows (bleed)
+  relvol: first non-null multi-day=09:30:00 vs isolated-day=10:19:00 -> 49 early bars valued only via prior-day rows (bleed)
+  signals in first 50 min (relvol-50 window spans prior day): 21 {'opening-rejection': 10, 'distribution': 8, 'accumulation': 3}
+
+=== COST SENSITIVITY (n, gross mean, t/p vs 0, net of ~0.07% round-trip) ===
+  fwd_15m: n=88 gross=+0.036% t=0.60 p=0.551 hit=48% net=-0.034%
+  fwd_30m: n=88 gross=+0.092% t=1.13 p=0.263 hit=53% net=+0.022%
+  fwd_60m: n=88 gross=+0.159% t=1.29 p=0.199 hit=58% net=+0.089%

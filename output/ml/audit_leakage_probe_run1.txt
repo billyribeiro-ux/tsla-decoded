@@ -1,0 +1,25 @@
+bars: (24959, 6) days: 64
+=== SIGNAL COUNT (shipped DEFAULTS, full 64d cached) ===
+total signals: 88 over 64 days -> 1.375 /day
+{'SELL': 52, 'BUY': 36}
+{'distribution': 41, 'accumulation': 36, 'opening-rejection': 11}
+
+=== PROBE 1: cross-day rolling bleed (isolated-day vs multi-day feature) ===
+max abs diff over full day: {'imb': 0.0, 'relvol': 0.0}
+max abs diff in first 50 bars: {'imb': 0.0, 'relvol': 0.0}
+
+=== PROBE 2: tuner ===
+chosen buy/sell thresh: 0.3 -0.3
+score components reward catching Jul-2 SELL & Jun-29 BUY (the known events).
+best trial: {'buy_thresh': 0.3, 'sell_thresh': -0.3, 'score': 3.59, 'sell_by_1005': True, 'buy_in_morning_drive': True, 'baseline_signals_per_day': 0.82}
+
+=== PROBE 3: entry fill (close-of-signal-bar vs next-bar-open) ===
+fwd_15m mean: signal-close-entry=+0.036%  next-open-entry=+0.036%  delta=-0.000%
+fwd_30m mean: signal-close-entry=+0.092%  next-open-entry=+0.092%  delta=-0.000%
+fwd_60m mean: signal-close-entry=+0.159%  next-open-entry=+0.160%  delta=-0.000%
+
+=== PROBE 4: shuffled-entry null (managed return) ===
+n signals: 88 observed mean managed: 0.171
+observed to_close mean=+0.116%  null mean=+0.435%  p(null>=obs)=0.997
+
+DONE
